@@ -1,59 +1,83 @@
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
 int main() 
 {
-    FILE *file1 = fopen("3.txt", "r");
+    int N = 3;                // Length of rows and cols
+    char file[] = "3.txt";    // Name of file
     
-    int M1[3][3]; 
-    int M2[3][3];
-    int M3[3][3];
-
-    // Read data into M1
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            fscanf(file1, "%d", &M1[i][j]);
-        }
+    // Open first matrix file
+    FILE *file1 = fopen(file, "r");
+    if (file1 == NULL) {
+        perror("Unable to open file");
+        return 1;
+    }
+    
+    // Open second matrix file
+    FILE *file2 = fopen(file, "r");
+    if (file2 == NULL) {
+        perror("Unable to open file");
+        return 1;
     }
 
-    fclose(file1);
+    // Allocate memory for matrices
+    int **M1 = (int **)malloc(N * sizeof(int *));
+    int **M2 = (int **)malloc(N * sizeof(int *));
+    int **M3 = (int **)malloc(N * sizeof(int *));
 
-    FILE *file2 = fopen("3.txt", "r");
+    for (int i = 0; i < N; i++) {
+        M1[i] = (int *)malloc(N * sizeof(int));
+        M2[i] = (int *)malloc(N * sizeof(int));
+        M3[i] = (int *)malloc(N * sizeof(int));
+    }
 
-    // Read data into M2
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
+    // Read data into M1 and M2
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            fscanf(file1, "%d", &M1[i][j]);
             fscanf(file2, "%d", &M2[i][j]);
         }
     }
 
+    // Close files
+    fclose(file1);
     fclose(file2);
 
-    // Addition
-    for(int i=0; i<3; i++) {
-        for(int j=0; j<3; j++) {
-            M3[i][j] = M1[i][j]+M2[i][j];
+    // Perform addition
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
+            M3[i][j] = M1[i][j] + M2[i][j];
         }
     }
 
-    // Open a new file for writing
+    // Open a new file to write result into
     FILE *outputFile = fopen("result.txt", "w");
-    
-    
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;
     }
 
     // Write M3 to the output file
-    for(int i = 0; i < 3; i++) {
-        for(int j = 0; j < 3; j++) {
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
             fprintf(outputFile, "%d ", M3[i][j]);
         }
         fprintf(outputFile, "\n");
     }
 
+    // Close result file
     fclose(outputFile);
 
+    // Deallocate memory for matrices
+    for (int i = 0; i < N; i++) {
+        free(M1[i]);
+        free(M2[i]);
+        free(M3[i]);
+    }
+    free(M1);
+    free(M2);
+    free(M3);
+
+    // End program
     return 0;
 }
