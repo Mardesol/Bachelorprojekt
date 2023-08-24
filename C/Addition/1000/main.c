@@ -1,24 +1,30 @@
 #include <stdio.h>
-#include <string.h>
-#include <stdio.h>   // For file input and output operations
-#include <stdlib.h>  // For dynamic memory allocation and deallocation
-
+#include <stdlib.h>
+#include <time.h>
 
 int main() 
 {
-    FILE *file1 = fopen("1000.txt", "r");
+    // Start measuring time OS spends on process
+    clock_t setupBegin = clock();
+
+    int N = 1000;                // Length of rows and cols
+    char file[] = "1000.txt";    // Name of file
+    
+    // Open first matrix file
+    FILE *file1 = fopen(file, "r");
     if (file1 == NULL) {
-        perror("Unable to open file1");
+        perror("Unable to open file");
         return 1;
     }
-    FILE *file2 = fopen("1000.txt", "r");
+    
+    // Open second matrix file
+    FILE *file2 = fopen(file, "r");
     if (file2 == NULL) {
-        perror("Unable to open file2");
+        perror("Unable to open file");
         return 1;
     }
 
-
-    int N = 1000;
+    // Allocate memory for matrices
     int **M1 = (int **)malloc(N * sizeof(int *));
     int **M2 = (int **)malloc(N * sizeof(int *));
     int **M3 = (int **)malloc(N * sizeof(int *));
@@ -29,7 +35,7 @@ int main()
         M3[i] = (int *)malloc(N * sizeof(int));
     }
 
-    // Reading data into M1 and M2
+    // Read data into M1 and M2
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             fscanf(file1, "%d", &M1[i][j]);
@@ -37,37 +43,52 @@ int main()
         }
     }
 
+    // Close files
     fclose(file1);
     fclose(file2);
 
-    // Addition
-    for(int i=0; i<1000; i++) {
-        for(int j=0; j<1000; j++) {
-            M3[i][j] = M1[i][j]+M2[i][j];
-            //printf("%d ", M3[i][j]);
+    // End measuring time OS spends on process
+    clock_t setupEnd = clock();
+    double time_spent1 = (double)(setupEnd - setupBegin) / CLOCKS_PER_SEC;
+    printf("Time spent on setup: %f seconds\n", time_spent1);
+
+    // Start measuring time OS spends on process
+    clock_t begin = clock();
+
+    // Perform addition
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
+            M3[i][j] = M1[i][j] + M2[i][j];
         }
-        //printf("\n");  
     }
 
-    // Open a new file for writing
+    // End measuring time OS spends on process
+    clock_t end = clock();
+    double time_spent2 = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time spent on addition: %f seconds\n", time_spent2);
+
+    // Start measuring time OS spends on process
+    clock_t ShutdownBegin = clock();
+
+    // Open a new file to write result into
     FILE *outputFile = fopen("result.txt", "w");
-    
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;
     }
 
-    // Write M3 to the output file
-    for(int i = 0; i < 1000; i++) {
-        for(int j = 0; j < 1000; j++) {
+    // Write M3 to the result file
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
             fprintf(outputFile, "%d ", M3[i][j]);
         }
         fprintf(outputFile, "\n");
     }
 
+    // Close result file
     fclose(outputFile);
 
-    // Deallocate memory
+    // Deallocate memory for matrices
     for (int i = 0; i < N; i++) {
         free(M1[i]);
         free(M2[i]);
@@ -77,5 +98,11 @@ int main()
     free(M2);
     free(M3);
 
+    // End measuring time OS spends on process
+    clock_t shutdownEnd = clock();
+    double time_spent3 = (double)(shutdownEnd - ShutdownBegin) / CLOCKS_PER_SEC;
+    printf("Time spent on shutdown: %f seconds\n", time_spent3);
+
+    // End program
     return 0;
 }

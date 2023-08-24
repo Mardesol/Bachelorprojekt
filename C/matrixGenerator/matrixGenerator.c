@@ -9,7 +9,7 @@ int main() {
     int cols = 1000;
     
     // Open a file for writing
-    FILE *file = fopen("matrix.txt", "w");
+    FILE *file = fopen("1000.txt", "w");
     
     if (file == NULL) {
         perror("Unable to create the file");

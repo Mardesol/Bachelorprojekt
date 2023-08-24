@@ -7,8 +7,8 @@ int main()
     // Start measuring time OS spends on process
     clock_t setupBegin = clock();
 
-    int N = 3;                // Length of rows and cols
-    char file[] = "3.txt";    // Name of file
+    int N = 10000;                // Length of rows and cols
+    char file[] = "10000.txt";    // Name of file
     
     // Open first matrix file
     FILE *file1 = fopen(file, "r");
