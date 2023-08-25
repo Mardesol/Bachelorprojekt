@@ -8,21 +8,7 @@ int main()
     clock_t setupBegin = clock();
 
     int N = 5000;                // Length of rows and cols
-    char file[] = "5000.txt";    // Name of file
-    
-    // Open first matrix file
-    FILE *file1 = fopen(file, "r");
-    if (file1 == NULL) {
-        perror("Unable to open file");
-        return 1;
-    }
-    
-    // Open second matrix file
-    FILE *file2 = fopen(file, "r");
-    if (file2 == NULL) {
-        perror("Unable to open file");
-        return 1;
-    }
+    int pattern[] = {1, 2, 3};
 
     // Allocate memory for matrices
     int **M1 = (int **)malloc(N * sizeof(int *));
@@ -38,14 +24,10 @@ int main()
     // Read data into M1 and M2
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
-            fscanf(file1, "%d", &M1[i][j]);
-            fscanf(file2, "%d", &M2[i][j]);
+            M1[i][j] = pattern[j % 9];
+            M2[i][j] = pattern[j % 9];
         }
     }
-
-    // Close files
-    fclose(file1);
-    fclose(file2);
 
     // End measuring time OS spends on process
     clock_t setupEnd = clock();

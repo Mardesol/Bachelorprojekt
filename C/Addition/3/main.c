@@ -10,7 +10,6 @@ int main()
     int N = 3;                // Length of rows and cols
     int pattern[] = {1, 2, 3};
 
-
     // Allocate memory for matrices
     int **M1 = (int **)malloc(N * sizeof(int *));
     int **M2 = (int **)malloc(N * sizeof(int *));
