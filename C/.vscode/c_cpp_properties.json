@@ -3,7 +3,7 @@
         {
             "name": "Win64",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/C/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -11,7 +11,7 @@
                 "_UNICODE"
             ],
             "compilerPath": "D:\\Programmering\\TDM-GCC\\bin\\gcc"
-        },
+        }
     ],
     "version": 4
 }
