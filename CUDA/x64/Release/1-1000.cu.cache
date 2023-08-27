@@ -1,4 +1,4 @@
-Identity=1000.cu
+Identity=1-1000.cu
 AdditionalCompilerOptions=
 AdditionalCompilerOptions=
 AdditionalDependencies=
@@ -8,7 +8,7 @@ AdditionalOptions=
 AdditionalOptions=
 CodeGeneration=compute_52,sm_52
 CodeGeneration=compute_52,sm_52
-CompileOut=C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Bachelorprojekt\CUDA\x64\Release\1000.cu.obj
+CompileOut=C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Bachelorprojekt\CUDA\x64\Release\1-1000.cu.obj
 CudaRuntime=Static
 CudaToolkitCustomDir=
 DebugInformationFormat=None

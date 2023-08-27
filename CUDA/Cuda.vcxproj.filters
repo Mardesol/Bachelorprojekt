@@ -19,10 +19,19 @@
     <Filter Include="Source Files\addition\1000">
       <UniqueIdentifier>{630c4537-3621-4505-927f-da28e1db9eea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\addition\2 -">
+      <UniqueIdentifier>{a77cdac0-707b-4657-b8ab-574a12dce214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\addition\1 - simple">
+      <UniqueIdentifier>{388c02b5-5879-4840-b006-d7ef0c2c54ef}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="1000.cu">
       <Filter>Source Files\addition\1000</Filter>
+    </CudaCompile>
+    <CudaCompile Include="1-1000.cu">
+      <Filter>Source Files\addition\1 - simple</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>
