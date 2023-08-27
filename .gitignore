@@ -7,4 +7,5 @@
 *.txt
 *.vs
 *.exe
+*.lib
 /Debug/
