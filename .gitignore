@@ -5,3 +5,7 @@
 *.cubin
 *.fatbin
 *.txt
+*.vs
+*.exe
+*.lib
+/Debug/
