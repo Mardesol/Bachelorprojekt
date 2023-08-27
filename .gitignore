@@ -6,3 +6,5 @@
 *.fatbin
 *.txt
 *.vs
+*.exe
+/Debug/
