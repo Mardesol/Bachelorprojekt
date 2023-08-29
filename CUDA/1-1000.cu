@@ -14,9 +14,14 @@ __global__ void matrixAdditionSimple(int* M1, int* M2, int* M3, int N) {
     }
 }
 
-int main1() {
+int main() {
     // Start measuring time OS spends on process
-    clock_t setupBegin = clock();
+    cudaEvent_t start, stop;
+    float elapsedTime1;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
 
     int N = 1000;                // Length of rows and cols
     int pattern[] = { 1, 2, 3 };
@@ -35,9 +40,12 @@ int main1() {
     }
 
     // End measuring time OS spends on process
-    clock_t setupEnd = clock();
-    double time_spent1 = (double)(setupEnd - setupBegin) / CLOCKS_PER_SEC;
-    printf("Time spent on setup: %f seconds\n", time_spent1);
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+
+    cudaEventElapsedTime(&elapsedTime1, start, stop);
+
+    printf("Time spent on setup: %f seconds\n", elapsedTime1);
 
     // Allocate memory for matrices on the GPU
     int* device_M1, * device_M2, * device_M3;
@@ -54,15 +62,20 @@ int main1() {
     dim3 gridDim((N * N + blockDim.x - 1) / blockDim.x);
 
     // Start measuring time for matrix addition on the GPU
-    clock_t begin = clock();
+    float elapsedTime2;
+
+    cudaEventRecord(start, 0);
 
     // Launch the CUDA kernel to perform matrix addition sequentially on GPU
     matrixAdditionSimple <<<gridDim, blockDim>>> (device_M1, device_M2, device_M3, N);
 
     // End measuring time for matrix addition on the GPU
-    clock_t end = clock();
-    double time_spent2 = (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("Time spent on addition (GPU): %f seconds\n", time_spent2);
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+
+    cudaEventElapsedTime(&elapsedTime2, start, stop);
+
+    printf("Time spent on addition (GPU): %f seconds\n", elapsedTime2);
 
     // Copy the result matrix from device to host
     cudaMemcpy(host_M3, device_M3, N * N * sizeof(int), cudaMemcpyDeviceToHost);
