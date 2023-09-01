@@ -8,4 +8,5 @@
 *.vs
 *.exe
 *.lib
+*.exp
 /Debug/

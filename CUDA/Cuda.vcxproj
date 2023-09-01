@@ -130,6 +130,11 @@
   <ItemGroup>
     <CudaCompile Include="1000.cu" />
     <CudaCompile Include="1-1000.cu" />
+    <CudaCompile Include="multiplication.cu" />
+    <CudaCompile Include="matrix.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="matrix.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
