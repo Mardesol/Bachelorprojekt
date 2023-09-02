@@ -5,22 +5,18 @@
 #include <stdlib.h>
 #include <time.h>
 
-// CUDA kernel to add two matrices
-__global__ void matrixAdditionSimple(int* M1, int* M2, int* M3, int N) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (index < N * N) {
-        M3[index] = M1[index] + M2[index];
-    }
-}
 
 int main() {
-    // Start measuring time OS spends on process
+    // Variables to track time
     cudaEvent_t start, stop;
-    float elapsedTime1;
-
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
+    // 
+    float setupTime;
+
+    // Start measuring time OS spends on process
+    
     cudaEventRecord(start, 0);
 
     int N = 1000;                // Length of rows and cols
@@ -43,9 +39,13 @@ int main() {
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
 
-    cudaEventElapsedTime(&elapsedTime1, start, stop);
+    cudaEventElapsedTime(&setupTime, start, stop);
 
-    printf("Time spent on setup: %f seconds\n", elapsedTime1);
+    printf("Time spent on setup: %f seconds\n", setupTime);
+
+
+
+
 
     // Allocate memory for matrices on the GPU
     int* device_M1, * device_M2, * device_M3;
@@ -61,8 +61,14 @@ int main() {
     dim3 blockDim(256);  // Use a single thread block
     dim3 gridDim((N * N + blockDim.x - 1) / blockDim.x);
 
+
     // Start measuring time for matrix addition on the GPU
     float elapsedTime2;
+
+
+
+
+
 
     cudaEventRecord(start, 0);
 

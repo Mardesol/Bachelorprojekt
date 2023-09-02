@@ -39,9 +39,6 @@
     <CudaCompile Include="1000.cu">
       <Filter>Source Files\addition\1000</Filter>
     </CudaCompile>
-    <CudaCompile Include="1-1000.cu">
-      <Filter>Source Files\addition\1 - simple</Filter>
-    </CudaCompile>
     <CudaCompile Include="multiplication.cu">
       <Filter>Source Files\multiplication\simple</Filter>
     </CudaCompile>

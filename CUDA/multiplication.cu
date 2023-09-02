@@ -40,6 +40,20 @@ __global__ void matrixMultiplicationV2(int* M1, int* M2, int* M3, int M1R, int M
 }
 
 int main() {
+
+	// Variables to measure time spent on a process
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	float setupTime;
+	float hostToDeviceTime;
+	float deviceToHostTime;
+	float calculationTime;
+	//float shutdownTime;
+
+	// Start the setup timer
+	cudaEventRecord(start, 0);
+
 	Matrix M1;
 	Matrix M2;
 	Matrix M3;
@@ -60,6 +74,15 @@ int main() {
 	populateWithOnes(M1);
 	populateWithOnes(M2);
 
+	// Stop the setup timer
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&setupTime, start, stop);
+	printf("Time spent on setup:                      %f seconds\n", setupTime);
+
+	// Start the data transfer timer (CPU -> GPU / Host -> Device)
+	cudaEventRecord(start, 0);
+
 	// Create the matrix objects to be stored on the device
 	int* device_M1, * device_M2, * device_M3;
 
@@ -73,13 +96,39 @@ int main() {
 	cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(int), cudaMemcpyHostToDevice);
 
+	// Stop the data transfer timer (CPU -> GPU / Host -> Device)
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&hostToDeviceTime, start, stop);
+	printf("Time spent on data transfer (CPU -> GPU): %f seconds\n", hostToDeviceTime);
+
+	// Define block and grid dimensions for CUDA kernel
 	dim3 blockDim(16, 16);
 	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
+	// Start the matrix addition timer
+	cudaEventRecord(start, 0);
+
+	// Perform multiplication
 	matrixMultiplicationSimple <<<gridDim, blockDim>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Rows, M2Cols);
+
+	// Stop the matrix multiplication timer
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&calculationTime, start, stop);
+	printf("Time spent on matrix addition (GPU):      %f seconds\n", calculationTime);
+
+	// Start the data transfer timer (GPU -> CPU / Device -> Host)
+	cudaEventRecord(start, 0);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
+
+	// Stop the data transfer timer (GPU -> CPU / Device -> Host)
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&deviceToHostTime, start, stop);
+	printf("Time spent on data transfer (GPU -> CPU): %f seconds\n", deviceToHostTime);
 
 	// Open a new file to write the result into
 	FILE* outputFile = fopen("result.txt", "w");
