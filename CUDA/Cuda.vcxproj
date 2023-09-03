@@ -128,7 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="1000.cu" />
+    <CudaCompile Include="addition.cu" />
     <CudaCompile Include="multiplication.cu" />
     <CudaCompile Include="matrix.cu" />
   </ItemGroup>
