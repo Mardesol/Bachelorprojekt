@@ -54,10 +54,10 @@ int main() {
 	// Start the setup timer
 	cudaEventRecord(start, 0);
 
+	// Define variables
 	Matrix M1;
 	Matrix M2;
 	Matrix M3;
-
 	int M1Rows = 4;
 	int M1Cols = 6;
 	int M2Rows = 6;
@@ -109,7 +109,7 @@ int main() {
 	// Start the matrix addition timer
 	cudaEventRecord(start, 0);
 
-	// Perform multiplication
+	// Launch the CUDA kernel to perform matrix multiplication
 	matrixMultiplicationSimple <<<gridDim, blockDim>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Rows, M2Cols);
 
 	// Stop the matrix multiplication timer
