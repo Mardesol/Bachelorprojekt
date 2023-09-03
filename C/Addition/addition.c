@@ -2,33 +2,13 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-#include <matrix.h>
+#include <..\Matrix\Matrix\matrix.c>
 
 void additionSimple(Matrix M1, Matrix M2, Matrix M3)
 {
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
             M3[i][j] = M1[i][j] + M2[i][j];
-        }
-    }
-}
-
-void additionV2(Matrix M1, Matrix M2, Matrix M3)
-{
-    for(int i = 0; i < M1.rows; i++) {
-        int pos1 = i * M1.cols;
-        int pos2 = i * M3.cols;
-    
-    for(int j = 0; j < M2.cols; j++) {
-        int sum = 0;
-        
-        for (int k = 0; k < M1.cols; k++) {
-            int a = M1.data[pos1 + k];
-            int b = M2.data[k * M2.cols + j];
-            sum = sum + (a * b);
-        }
-
-        M3.data[pos2 + j] = sum;
         }
     }
 }
