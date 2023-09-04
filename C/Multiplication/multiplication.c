@@ -44,8 +44,7 @@ void multiplicationV2(Matrix M1, Matrix M2, Matrix M3)
 int main() 
 {
     // Start measuring time OS spends on process
-    struct timeval begin, end;
-    Timer timer = createTimer(begin, end);
+    Timer timer = createTimer();
     beginTimer(&timer);
 
     Matrix M1;

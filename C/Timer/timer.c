@@ -4,9 +4,10 @@
 #include <sys/time.h>
 #include <time.h>
 
-struct Timer createTimer(struct timeval begin, struct timeval end)
+struct Timer createTimer()
 {
 	struct Timer timer;
+	struct timeval begin, end;
 	timer.begin = begin;
 	timer.end = end;
 
