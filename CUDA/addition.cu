@@ -59,8 +59,11 @@ int main() {
     M3 = createMatrix(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnes(M1);
-    populateWithOnes(M2);
+    //populateWithOnes(M1);
+    //populateWithOnes(M2);
+    populateWithRandomInts(M1);
+    populateWithRandomInts(M2);
+
 
     // Stop the setup timer
     cudaEventRecord(stop, 0);

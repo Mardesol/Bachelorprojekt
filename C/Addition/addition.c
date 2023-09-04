@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-#include <..\Matrix\Matrix\matrix.c>
+#include "../Matrix/matrix.h"
+#include "../Matrix/matrix.c"
 
 void additionSimple(Matrix M1, Matrix M2, Matrix M3)
 {
-    for(int i = 0; i < N; i++) {
-        for(int j = 0; j < N; j++) {
-            M3[i][j] = M1[i][j] + M2[i][j];
+    for(int i = 0; i < M3.rows; i++) {
+        for(int j = 0; j < M3.cols; j++) {
+            M3.data[i * M3.cols + j] = M1.data[i * M1.cols + j] + M2.data[i * M2.cols + j];
         }
     }
 }
@@ -19,9 +20,17 @@ int main()
     struct timeval begin, end;
     gettimeofday(&begin, 0);
 
+    Matrix M1;
+    Matrix M2;
+    Matrix M3;
+
+    M1 = createMatrix(500, 500);
+    M2 = createMatrix(500, 500);
+    M3 = createMatrix(500, 500);
+
     // Read data into M1 and M2
-    populateWithOnes(M1);
-    populateWithOnes(M2);
+    populateWithRandomInts(M1);
+    populateWithRandomInts(M2);
 
     // End measuring time OS spends on process
     gettimeofday(&end, 0);
@@ -54,25 +63,26 @@ int main()
     }
 
     // Write M3 to the result file
-    for(int i = 0; i < N; i++) {
-        for(int j = 0; j < N; j++) {
-            fprintf(outputFile, "%d ", M3[i][j]);
+    for(int i = 0; i < M3.rows; i++) {
+        for(int j = 0; j < M3.cols; j++) {
+            fprintf(outputFile, "%d ", M3.data[i * M3.cols + j]);
         }
         fprintf(outputFile, "\n");
     }
+
 
     // Close result file
     fclose(outputFile);
 
     // Deallocate memory for matrices
-    for (int i = 0; i < N; i++) {
-        free(M1[i]);
-        free(M2[i]);
-        free(M3[i]);
-    }
-    free(M1);
-    free(M2);
-    free(M3);
+    // for (int i = 0; i < N; i++) {
+    //     free(M1[i]);
+    //     free(M2[i]);
+    //     free(M3[i]);
+    // }
+    free(M1.data);
+    free(M2.data);
+    free(M3.data);
 
     // End measuring time OS spends on process
     gettimeofday(&end, 0);

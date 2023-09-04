@@ -1,28 +1,23 @@
-#include "matrix.cuh"
-
+#include "matrix.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <curand_kernel.h>
-
-// Create a matrix on the host
-Matrix createMatrix(int rows, int cols) {
-    Matrix matrix;
+// Create a matrix
+struct Matrix createMatrix(int rows, int cols) {
+    struct Matrix matrix;
     matrix.rows = rows;
     matrix.cols = cols;
-
-    // Allocate host memory for the matrix data
-    matrix.data = (int*)malloc(rows * cols * sizeof(int));
-
+    matrix.data = (int *)malloc(rows * cols * sizeof(int));
+    
     if (matrix.data == NULL) {
         printf("Memory allocation failed.\n");
         exit(1);
     }
-
+    
     return matrix;
 }
 
-// Set all elements in the matrix to hold value 1
+// Set all indices in matrix to hold value 1
 void populateWithOnes(Matrix matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
@@ -30,7 +25,6 @@ void populateWithOnes(Matrix matrix) {
         }
     }
 }
-
 
 // Generate random integers on the CPU using srand
 void populateWithRandomInts(Matrix matrix) {
@@ -42,3 +36,4 @@ void populateWithRandomInts(Matrix matrix) {
         }
     }
 }
+

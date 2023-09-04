@@ -10,5 +10,6 @@ struct Matrix {
 Matrix createMatrix(int rows, int cols);
 
 void populateWithOnes(Matrix matrix);
+void populateWithRandomInts(Matrix matrix);
 
 #endif
