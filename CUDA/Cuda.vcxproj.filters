@@ -36,7 +36,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="1000.cu">
+    <CudaCompile Include="addition.cu">
       <Filter>Source Files\addition\1000</Filter>
     </CudaCompile>
     <CudaCompile Include="multiplication.cu">
