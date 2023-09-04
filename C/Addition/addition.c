@@ -4,6 +4,8 @@
 #include <time.h>
 #include "../Matrix/matrix.h"
 #include "../Matrix/matrix.c"
+#include "../Timer/timer.h"
+#include "../Timer/timer.c"
 
 void additionSimple(Matrix M1, Matrix M2, Matrix M3)
 {
@@ -18,7 +20,8 @@ int main()
 {
     // Start measuring time OS spends on process
     struct timeval begin, end;
-    gettimeofday(&begin, 0);
+    Timer timer = createTimer(begin, end);
+    beginTimer(&timer);
 
     Matrix M1;
     Matrix M2;
@@ -33,27 +36,19 @@ int main()
     populateWithRandomInts(M2);
 
     // End measuring time OS spends on process
-    gettimeofday(&end, 0);
-    long seconds1 = end.tv_sec - begin.tv_sec;
-    long microseconds1 = end.tv_usec - begin.tv_usec;
-    double elapsed1 = seconds1 + microseconds1 * 1e-6;
-    printf("Time spent on setup: %f seconds\n", elapsed1);
+    endTimer(&timer, "setup", 5);
 
     // Start measuring time OS spends on process
-    gettimeofday(&begin, 0);
+    beginTimer(&timer);
 
     // Perform addition
     additionSimple(M1, M2, M3);
 
     // End measuring time OS spends on process
-    gettimeofday(&end, 0);
-    long seconds2 = end.tv_sec - begin.tv_sec;
-    long microseconds2 = end.tv_usec - begin.tv_usec;
-    double elapsed2 = seconds2 + microseconds2 * 1e-6;
-    printf("Time spent on addition: %f seconds\n", elapsed2);
+    endTimer(&timer, "addition", 8);
 
     // Start measuring time OS spends on process
-    gettimeofday(&begin, 0);
+    beginTimer(&timer);
 
     // Open a new file to write result into
     FILE *outputFile = fopen("result.txt", "w");
@@ -85,11 +80,7 @@ int main()
     free(M3.data);
 
     // End measuring time OS spends on process
-    gettimeofday(&end, 0);
-    long seconds3 = end.tv_sec - begin.tv_sec;
-    long microseconds3 = end.tv_usec - begin.tv_usec;
-    double elapsed3 = seconds3 + microseconds3 * 1e-6;
-    printf("Time spent on shutdown: %f seconds\n", elapsed3);
+    endTimer(&timer, "shutdown", 8);
 
     // End program
     return 0;
