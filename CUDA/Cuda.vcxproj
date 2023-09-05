@@ -128,14 +128,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="addition.cu" />
-    <CudaCompile Include="multiplication.cu" />
-    <CudaCompile Include="matrix.cu" />
-    <CudaCompile Include="timer.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="matrix.cuh" />
-    <ClInclude Include="timer.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

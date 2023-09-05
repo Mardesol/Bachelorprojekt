@@ -13,48 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\addition">
-      <UniqueIdentifier>{cf68ca6e-1ad6-4adc-9edb-5e480231c8c0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\addition\1000">
-      <UniqueIdentifier>{630c4537-3621-4505-927f-da28e1db9eea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\addition\2 -">
-      <UniqueIdentifier>{a77cdac0-707b-4657-b8ab-574a12dce214}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\addition\1 - simple">
-      <UniqueIdentifier>{388c02b5-5879-4840-b006-d7ef0c2c54ef}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\multiplication">
-      <UniqueIdentifier>{089f1f4c-641d-41bf-b0f6-640138e78d7e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\multiplication\simple">
-      <UniqueIdentifier>{a0b00855-a871-4c21-86d5-6d3e1ea2fd09}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\matrix">
-      <UniqueIdentifier>{2d8a1dca-5a57-4f6d-a511-65c882bcfd39}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
+	
   <ItemGroup>
-    <CudaCompile Include="addition.cu">
-      <Filter>Source Files\addition\1000</Filter>
-    </CudaCompile>
-    <CudaCompile Include="multiplication.cu">
-      <Filter>Source Files\multiplication\simple</Filter>
-    </CudaCompile>
-    <CudaCompile Include="matrix.cu">
-      <Filter>Source Files\multiplication\simple</Filter>
-    </CudaCompile>
-    <CudaCompile Include="timer.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="matrix.cuh">
-      <Filter>Source Files\multiplication\simple</Filter>
-    </ClInclude>
-    <ClInclude Include="matrix.cuh">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-  </ItemGroup>
+	
 </Project>

@@ -1,4 +1,4 @@
-#include "matrix.cuh"
+#include "..\..\Header Files\matrix.cuh"
 
 #include <stdio.h>
 #include <stdlib.h>
