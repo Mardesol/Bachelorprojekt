@@ -45,10 +45,16 @@
     <CudaCompile Include="matrix.cu">
       <Filter>Source Files\multiplication\simple</Filter>
     </CudaCompile>
+    <CudaCompile Include="timer.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="matrix.cuh">
       <Filter>Source Files\multiplication\simple</Filter>
+    </ClInclude>
+    <ClInclude Include="matrix.cuh">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

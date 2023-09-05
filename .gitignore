@@ -10,5 +10,3 @@
 *.lib
 *.exp
 /Debug/
-CUDA/Cuda.vcxproj
-CUDA/Cuda.vcxproj.filters
