@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "matrixFloats.cu"
+#include "..\..\Matrix\matrixFloats.cu"
 #include "..\..\Timer\timer.cu" 
 
 __global__ void matrixMultiplicationSimple(float* M1, float* M2, float* M3, int M1R, int M1C, int M2R, int M2C) {

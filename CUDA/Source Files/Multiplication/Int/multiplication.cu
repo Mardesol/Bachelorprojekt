@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "..\Matrix\matrix.cu"
-#include "..\Timer\timer.cu"
+#include "..\..\Matrix\matrixInts.cu"
+#include "..\..\Timer\timer.cu"
 
 __global__ void matrixMultiplicationSimple(int* M1, int* M2, int* M3, int M1R, int M1C, int M2R, int M2C) {
 	
