@@ -129,11 +129,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="addition.cu" />
+    <CudaCompile Include="float\matrixFloats.cu" />
+    <CudaCompile Include="float\multiplicationFloats.cu" />
     <CudaCompile Include="multiplication.cu" />
     <CudaCompile Include="matrix.cu" />
     <CudaCompile Include="timer.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="float\matrixFloats.cuh" />
     <ClInclude Include="matrix.cuh" />
     <ClInclude Include="timer.cuh" />
   </ItemGroup>

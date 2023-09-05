@@ -1,4 +1,8 @@
-#include "timer.cuh"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "stdio.h"
+
+#include "..\..\Header Files\timer.cuh"
 
 struct Timer createTimer()
 {
@@ -16,7 +20,7 @@ void beginTimer(Timer timer)
 	cudaEventRecord(timer.start, 0);
 }
 
-void endTimer(Timer timer, char* message)
+void endTimer(Timer timer, const char* message)
 {
 	float timeElapsed;
 	cudaEventRecord(timer.stop, 0);

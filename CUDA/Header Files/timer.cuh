@@ -1,6 +1,8 @@
 #ifndef TIMER_CUH
 #define TIMER_CUH
 
+#include "cuda_runtime.h"
+
 typedef struct Timer {
 	cudaEvent_t start;
 	cudaEvent_t stop;
@@ -8,6 +10,6 @@ typedef struct Timer {
 
 Timer createTimer();
 void beginTimer(Timer timer);
-void endTimer(Timer timer, char *message);
+void endTimer(Timer timer, const char *message);
 
 #endif
