@@ -16,35 +16,6 @@
   </ItemGroup>
 	
   <ItemGroup>
-    <CudaCompile Include="addition.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="multiplication.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="matrix.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="timer.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-	<CudaCompile Include="float\matrixFloats.cu">
-		<Filter>Source Files</Filter>
-	</CudaCompile>
-	<CudaCompile Include="float\multiplicationFloats.cu">
-		<Filter>Source Files</Filter>
-	</CudaCompile>
   </ItemGroup>
 	
-  <ItemGroup>
-    <ClInclude Include="matrix.cuh">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="timer.cuh">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-	<ClInclude Include="float\matrixFloats.cuh">
-		<Filter>Header Files</Filter>
-	</ClInclude>
-  </ItemGroup>
 </Project>
