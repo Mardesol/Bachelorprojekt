@@ -52,10 +52,10 @@ int main() {
 	Matrix M1;
 	Matrix M2;
 	Matrix M3;
-	int M1Rows = 400;
-	int M1Cols = 400;
-	int M2Rows = 400;
-	int M2Cols = 400;
+	int M1Rows = 100;
+	int M1Cols = 100;
+	int M2Rows = 100;
+	int M2Cols = 100;
 	int M3Rows = M1Rows;
 	int M3Cols = M2Cols;
 

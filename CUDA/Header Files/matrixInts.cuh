@@ -1,5 +1,5 @@
-#ifndef MATRIX_CUH
-#define MATRIX_CUH
+#ifndef MATRIXINTS_CUH
+#define MATRIXINTS_CUH
 
 struct Matrix {
     int rows;
