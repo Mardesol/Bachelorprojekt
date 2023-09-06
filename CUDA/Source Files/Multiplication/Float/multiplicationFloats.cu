@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+    
 #include "..\..\Matrix\matrixFloats.cu"
 #include "..\..\Timer\timer.cu" 
 
@@ -48,24 +48,24 @@ int main() {
     beginTimer(timer);
 
     // Define variables
-    MatrixF M1; // Change Matrix to MatrixF
-    MatrixF M2; // Change Matrix to MatrixF
-    MatrixF M3; // Change Matrix to MatrixF
-    int M1Rows = 200;
-    int M1Cols = 200;
-    int M2Rows = 200;
-    int M2Cols = 200;
+    MatrixF M1; 
+    MatrixF M2; 
+    MatrixF M3; 
+    int M1Rows = 500;
+    int M1Cols = 500;
+    int M2Rows = 500;
+    int M2Cols = 500;
     int M3Rows = M1Rows;
     int M3Cols = M2Cols;
 
     // Create the matrix objects
-    M1 = createMatrixF(M1Rows, M1Cols); // Change createMatrix to createMatrixF
-    M2 = createMatrixF(M2Rows, M2Cols); // Change createMatrix to createMatrixF
-    M3 = createMatrixF(M3Rows, M3Cols); // Change createMatrix to createMatrixF
+    M1 = createMatrixF(M1Rows, M1Cols); 
+    M2 = createMatrixF(M2Rows, M2Cols); 
+    M3 = createMatrixF(M3Rows, M3Cols); 
 
     // Populate the matrices
-    populateWithOnesF(M1); // Change populateWithOnes to populateWithOnesF
-    populateWithOnesF(M2); // Change populateWithOnes to populateWithOnesF
+    populateWithOnesF(M1); 
+    populateWithOnesF(M2); 
 
     // Stop the setup timer
     endTimer(timer, "setup");
@@ -77,14 +77,14 @@ int main() {
     float* device_M1, * device_M2, * device_M3;
 
     // Allocate memory for matrices on the GPU
-    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(float)); // Change int to float
-    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(float)); // Change int to float
-    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(float)); // Change int to float
+    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(float)); 
+    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(float)); 
+    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(float)); 
 
     // Copy data from host to device
     // The data is matrix 1 and 2
-    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(float), cudaMemcpyHostToDevice); // Change int to float
-    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(float), cudaMemcpyHostToDevice); // Change int to float
+    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(float), cudaMemcpyHostToDevice); 
+    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(float), cudaMemcpyHostToDevice); 
 
     // Stop the data transfer timer (CPU -> GPU / Host -> Device)
     endTimer(timer, "data transfer (CPU -> GPU)");
@@ -106,7 +106,7 @@ int main() {
     beginTimer(timer);
 
     // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost); // Change int to float
+    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost); 
 
     // Stop the data transfer timer (GPU -> CPU / Device -> Host)
     endTimer(timer, "data transfer (GPU -> CPU)");
@@ -121,7 +121,7 @@ int main() {
     // Write host_M3 to the result file
     for (int i = 0; i < M3Rows; i++) {
         for (int j = 0; j < M3Cols; j++) {
-            fprintf(outputFile, "%f ", M3.data[i * M3Rows + j]); // Change %d to %f
+            fprintf(outputFile, "%f ", M3.data[i * M3Rows + j]); 
         }
         fprintf(outputFile, "\n");
     }

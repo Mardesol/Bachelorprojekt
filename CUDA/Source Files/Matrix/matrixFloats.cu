@@ -1,4 +1,4 @@
-#include "..\..\..\Header Files\matrixFloats.cuh"
+#include "..\..\Header Files\matrixFloats.cuh"
 
 #include <stdio.h>
 #include <stdlib.h>

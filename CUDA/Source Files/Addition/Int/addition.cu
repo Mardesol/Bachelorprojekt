@@ -6,7 +6,7 @@
 #include <time.h>
 
 #include "..\..\Timer\timer.cu" 
-#include "..\..\Matrix\matrix.cu"
+#include "..\..\Matrix\matrixInts.cu"
 
 
 // CUDA kernel to add two matrices
