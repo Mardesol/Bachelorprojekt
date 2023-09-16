@@ -14,8 +14,9 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
-	
   <ItemGroup>
+    <CudaCompile Include="Source Files\Addition\Int\additionTest.cu" />
+    <CudaCompile Include="Source Files\Addition\Int\testTimer.cu" />
+    <CudaCompile Include="Source Files\Multiplication\Int\multiplicationTest.cu" />
   </ItemGroup>
-	
 </Project>

@@ -28,3 +28,12 @@ void endTimer(Timer timer, const char* message)
 	cudaEventElapsedTime(&timeElapsed, timer.start, timer.stop);
 	printf("Time spent on %s: %f ms\n", message, timeElapsed);
 }
+
+float endTimerReturnTime(Timer timer)
+{
+	float timeElapsed;
+	cudaEventRecord(timer.stop, 0);
+	cudaEventSynchronize(timer.stop);
+	cudaEventElapsedTime(&timeElapsed, timer.start, timer.stop);
+	return timeElapsed;
+}
