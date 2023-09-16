@@ -12,15 +12,17 @@ const int M1Rows = 200;
 const int M1Cols = 200;
 const int M2Rows = 200;
 const int M2Cols = 200;
+const int M3Rows = M1Rows;
+const int M3Cols = M2Cols;
 
 __global__ void MMV1Sequential(int* M1, int* M2, int* M3) {
-	
+
 	for (int i = 0; i < M1Rows; i++) {
 		for (int j = 0; j < M2Cols; j++) {
 			int sum = 0;
 			for (int k = 0; k < M1Cols; k++) {
-				sum += M1[i * M1Cols + k] * 
-					   M2[k * M2Cols + j];
+				sum += M1[i * M1Cols + k] *
+					M2[k * M2Cols + j];
 			}
 			M3[i * M2Cols + j] = sum;
 		}
@@ -35,8 +37,8 @@ __global__ void MMV2Parallelism(int* M1, int* M2, int* M3) {
 		int sum = 0;
 
 		for (int i = 0; i < M1Cols; i++) {
-			sum += M1[row * M1Cols + i] * 
-				   M2[i * M2Cols + col];
+			sum += M1[row * M1Cols + i] *
+				M2[i * M2Cols + col];
 		}
 		M3[row * M2Cols + col] = sum;
 	}
@@ -56,7 +58,7 @@ __global__ void MMV3SharedMemoryAndTiling(int* M1, int* M2, int* M3) {
 	for (int i = 0; i < M1Cols; i += blockDim.x) {
 		sharedMemory1[threadIdx.x] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0;
 		sharedMemory2[threadIdx.y] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0;
-		
+
 		__syncthreads();
 
 		// Perform the multiplication
@@ -72,8 +74,37 @@ __global__ void MMV3SharedMemoryAndTiling(int* M1, int* M2, int* M3) {
 	}
 }
 
-int main() {
+// Function to measure and record execution times to a file
+void measureAndRecordExecutionTimes(
+	const char* outputFileName,
+	Timer timer,
+	void (*kernel)(int*, int*, int*),
+	int* M1, int* M2, int* M3,
+	dim3 gridDim, dim3 blockDim
+) {
+	// Open a new file to write the result into
+	FILE* outputFile = fopen(outputFileName, "w");
+	if (outputFile == NULL) {
+		perror("Unable to create the output file");
+		return;
+	}
 
+	for (int i = 0; i < 100; i++) {
+		// Measure execution time for MMV1Sequential
+		beginTimer(timer);
+		cudaDeviceSynchronize();
+		kernel <<<gridDim, blockDim>>>(M1, M2, M3);
+		cudaDeviceSynchronize();
+		float time = endTimerReturnTime(timer);
+
+		fprintf(outputFile, "%f ms\n", time);
+	}
+
+	// Close the output file
+	fclose(outputFile);
+}
+
+int main() {
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 
@@ -84,8 +115,6 @@ int main() {
 	Matrix M1;
 	Matrix M2;
 	Matrix M3;
-	int M3Rows = M1Rows;
-	int M3Cols = M2Cols;
 
 	// Create the matrix objects
 	M1 = createMatrix(M1Rows, M1Cols);
@@ -111,7 +140,6 @@ int main() {
 	cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(int));
 
 	// Copy data from host to device
-	// The data is matrix 1 and 2
 	cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(int), cudaMemcpyHostToDevice);
 
@@ -119,7 +147,7 @@ int main() {
 	endTimer(timer, "data transfer (CPU -> GPU)");
 
 	// Define block and grid dimensions for CUDA kernel
-	dim3 blockDim(16,16);
+	dim3 blockDim(16, 16);
 
 	if (M3Rows <= 16 && M3Cols <= 16) {
 		blockDim = dim3(M3Cols, M3Rows);  // Use matrix size for smaller matrices
@@ -127,43 +155,13 @@ int main() {
 
 	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-	// Start the matrix addition timer
-	beginTimer(timer);
-
-	// Launch the CUDA kernel to perform matrix multiplication
-	cudaDeviceSynchronize();
-	MMV1Sequential <<<gridDim, blockDim>>>(device_M1, device_M2, device_M3);
-	cudaDeviceSynchronize();
-
-	// Stop the matrix multiplication timer
-	endTimer(timer, "matrix multiplication (GPU)");
-
-	// Start the data transfer timer (GPU -> CPU / Device -> Host)
-	beginTimer(timer);
+	// Measure and record execution times
+	measureAndRecordExecutionTimes("Test/MMV1SequentialResults.txt", timer, MMV1Sequential, device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureAndRecordExecutionTimes("Test/MMV2Parallelism.txt", timer, MMV2Parallelism, device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureAndRecordExecutionTimes("Test/MMV3SharedMemoryAndTiling.txt", timer, MMV3SharedMemoryAndTiling, device_M1, device_M2, device_M3, gridDim, blockDim);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
-
-	// Stop the data transfer timer (GPU -> CPU / Device -> Host)
-	endTimer(timer, "data transfer (GPU -> CPU)");
-
-	// Open a new file to write the result into
-	FILE* outputFile = fopen("result.txt", "w");
-	if (outputFile == NULL) {
-		perror("Unable to create the output file");
-		return 1;
-	}
-
-	// Write host_M3 to the result file
-	for (int i = 0; i < M3Rows; i++) {
-		for (int j = 0; j < M3Cols; j++) {
-			fprintf(outputFile, "%d ", M3.data[i * M3Rows + j]);
-		}
-		fprintf(outputFile, "\n");
-	}
-
-	// Close the result file
-	fclose(outputFile);
 
 	// Deallocate memory on the GPU and CPU
 	cudaFree(device_M1);
