@@ -9,4 +9,6 @@
 *.exe
 *.lib
 *.exp
+*.ncu-rep
+Nsight/
 /Debug/
