@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "..\..\Matrix\matrixFloats.cu" // Assuming you have a matrixFloats.cu file
+#include "..\..\Matrix\matrixDoubles.cu"  // Update to the header file for double matrices
 #include "..\..\Timer\timer.cu"
 
 const int M1Rows = 200;
@@ -13,49 +13,46 @@ const int M1Cols = 200;
 const int M2Rows = 200;
 const int M2Cols = 200;
 
-__global__ void MMV1Sequential(float* M1, float* M2, float* M3) {
-
+__global__ void MMV1Sequential(double* M1, double* M2, double* M3) {
     for (int i = 0; i < M1Rows; i++) {
         for (int j = 0; j < M2Cols; j++) {
-            float sum = 0.0f;
+            double sum = 0.0;
             for (int k = 0; k < M1Cols; k++) {
-                sum += M1[i * M1Cols + k] *
-                    M2[k * M2Cols + j];
+                sum += M1[i * M1Cols + k] * M2[k * M2Cols + j];
             }
             M3[i * M2Cols + j] = sum;
         }
     }
 }
 
-__global__ void MMV2Parallelism(float* M1, float* M2, float* M3) {
+__global__ void MMV2Parallelism(double* M1, double* M2, double* M3) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (row < M1Rows && col < M2Cols) {
-        float sum = 0.0f;
+        double sum = 0.0;
 
         for (int i = 0; i < M1Cols; i++) {
-            sum += M1[row * M1Cols + i] *
-                M2[i * M2Cols + col];
+            sum += M1[row * M1Cols + i] * M2[i * M2Cols + col];
         }
         M3[row * M2Cols + col] = sum;
     }
 }
 
-__global__ void MMV3SharedMemoryAndTiling(float* M1, float* M2, float* M3) {
+__global__ void MMV3SharedMemoryAndTiling(double* M1, double* M2, double* M3) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     // Allocate shared memory
-    __shared__ float sharedMemory1[16];
-    __shared__ float sharedMemory2[16];
+    __shared__ double sharedMemory1[16];
+    __shared__ double sharedMemory2[16];
 
-    float sum = 0.0f;
+    double sum = 0.0;
 
     // Read into shared memory in a coalescing manner
     for (int i = 0; i < M1Cols; i += blockDim.x) {
-        sharedMemory1[threadIdx.x] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0.0f;
-        sharedMemory2[threadIdx.y] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0.0f;
+        sharedMemory1[threadIdx.x] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0.0;
+        sharedMemory2[threadIdx.y] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0.0;
 
         __syncthreads();
 
@@ -73,7 +70,6 @@ __global__ void MMV3SharedMemoryAndTiling(float* M1, float* M2, float* M3) {
 }
 
 int main() {
-
     // Timer measure time spent on a process
     Timer timer = createTimer();
 
@@ -81,20 +77,20 @@ int main() {
     beginTimer(timer);
 
     // Define variables
-    MatrixFloats M1;
-    MatrixFloats M2;
-    MatrixFloats M3;
+    MatrixDoubles M1;  // Use MatrixDouble for double data type
+    MatrixDoubles M2;  // Use MatrixDouble for double data type
+    MatrixDoubles M3;  // Use MatrixDouble for double data type
     int M3Rows = M1Rows;
     int M3Cols = M2Cols;
 
     // Create the matrix objects
-    M1 = createMatrixFloats(M1Rows, M1Cols);
-    M2 = createMatrixFloats(M2Rows, M2Cols);
-    M3 = createMatrixFloats(M3Rows, M3Cols);
+    M1 = createMatrixDoubles(M1Rows, M1Cols);  // Use createMatrixDouble
+    M2 = createMatrixDoubles(M2Rows, M2Cols);  // Use createMatrixDouble
+    M3 = createMatrixDoubles(M3Rows, M3Cols);  // Use createMatrixDouble
 
     // Populate the matrices
-    populateWithOnesFloats(M1);
-    populateWithOnesFloats(M2);
+    populateWithOnesDoubles(M1);  // Use populateWithOnesDouble
+    populateWithOnesDoubles(M2);  // Use populateWithOnesDouble
 
     // Stop the setup timer
     endTimer(timer, "setup");
@@ -103,17 +99,17 @@ int main() {
     beginTimer(timer);
 
     // Create the matrix objects to be stored on the device
-    float* device_M1, * device_M2, * device_M3;
+    double* device_M1, * device_M2, * device_M3;  // Change data type to double
 
     // Allocate memory for matrices on the GPU
-    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(float));
-    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(float));
-    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(float));
+    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(double));  // Change data type to double
+    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(double));  // Change data type to double
+    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(double));  // Change data type to double
 
     // Copy data from host to device
     // The data is matrix 1 and 2
-    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(double), cudaMemcpyHostToDevice);  // Change data type to double
+    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(double), cudaMemcpyHostToDevice);  // Change data type to double
 
     // Stop the data transfer timer (CPU -> GPU / Host -> Device)
     endTimer(timer, "data transfer (CPU -> GPU)");
@@ -127,7 +123,7 @@ int main() {
 
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-    // Start the matrix addition timer
+    // Start the matrix multiplication timer
     beginTimer(timer);
 
     // Launch the CUDA kernel to perform matrix multiplication
@@ -142,13 +138,13 @@ int main() {
     beginTimer(timer);
 
     // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(double), cudaMemcpyDeviceToHost);  // Change data type to double
 
     // Stop the data transfer timer (GPU -> CPU / Device -> Host)
     endTimer(timer, "data transfer (GPU -> CPU)");
 
     // Open a new file to write the result into
-    FILE* outputFile = fopen("resultFloats.txt", "w");
+    FILE* outputFile = fopen("resultDoubles.txt", "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;
@@ -157,7 +153,7 @@ int main() {
     // Write host_M3 to the result file
     for (int i = 0; i < M3Rows; i++) {
         for (int j = 0; j < M3Cols; j++) {
-            fprintf(outputFile, "%f ", M3.data[i * M3Rows + j]);
+            fprintf(outputFile, "%lf ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
         }
         fprintf(outputFile, "\n");
     }
