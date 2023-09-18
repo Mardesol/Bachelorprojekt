@@ -156,8 +156,8 @@ int main() {
 	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
 	// Measure and record execution times
-	measureAndRecordExecutionTimes("Test/MMV1SequentialResults.txt", timer, MMV1Sequential, device_M1, device_M2, device_M3, gridDim, blockDim);
-	measureAndRecordExecutionTimes("Test/MMV2Parallelism.txt", timer, MMV2Parallelism, device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureAndRecordExecutionTimes("Test/MMV1SequentialResults.txt",	 timer, MMV1Sequential,			   device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureAndRecordExecutionTimes("Test/MMV2Parallelism.txt",			 timer, MMV2Parallelism,		   device_M1, device_M2, device_M3, gridDim, blockDim);
 	measureAndRecordExecutionTimes("Test/MMV3SharedMemoryAndTiling.txt", timer, MMV3SharedMemoryAndTiling, device_M1, device_M2, device_M3, gridDim, blockDim);
 
 	// Copy the result matrix from device to host
