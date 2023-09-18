@@ -7,9 +7,10 @@
 
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixInts.cu"
+#include "..\..\Matrix\matrixOperationsCPU.cu"
 
-const int rows = 200;
-const int cols = 200;
+const int rows = 10;
+const int cols = 10;
 
 const int M1Rows = rows;
 const int M2Rows = rows;
@@ -92,6 +93,10 @@ int main() {
     //populateWithRandomInts(M1);
     //populateWithRandomInts(M2);
 
+    //Setup a CPU comparison matrix
+    MatrixI MCPU = createMatrixI(M3Rows, M3Cols);
+    additionInt(M1.data, M2.data, MCPU.data, M3Rows, M3Cols);
+
     // Stop the setup timer
     endTimer(timer, "setup");
     // Start the data transfer timer (CPU -> GPU / Host -> Device)
@@ -120,7 +125,7 @@ int main() {
     beginTimer(timer);
 
     // Launch the CUDA kernel to perform matrix addition
-    matrixAdditionSharedMemory <<<gridDim, blockDim>>> (device_M1, device_M2, device_M3);
+    matrixAdditionSequential <<<gridDim, blockDim>>> (device_M1, device_M2, device_M3);
 
     // Stop the matrix addition timer
     endTimer(timer, "matrix addition (GPU)");
@@ -151,6 +156,49 @@ int main() {
 
     // Close the result file
     fclose(outputFile);
+
+    //Validate result by comparing to CPU calculations
+    bool valid = compareMatricesInt(MCPU.data, M3.data, M3Rows, M3Cols);
+    if (valid) {
+        printf("Matrix addition results match!\n");
+    }
+    else {
+        printf("Matrix addition results do not match.\n");
+        // Write the matrices to text files for analysis
+        FILE* outputFile1 = fopen("resultIntsCPU.txt", "w");
+        if (outputFile1 == NULL) {
+            perror("Unable to create the output file");
+            return 1;
+        }
+
+        // Write host_M3 to the result file
+        for (int i = 0; i < M3Rows; i++) {
+            for (int j = 0; j < M3Cols; j++) {
+                fprintf(outputFile1, "%d ", MCPU.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            }
+            fprintf(outputFile1, "\n");
+        }
+
+        // Close the result file
+        fclose(outputFile1);
+
+        FILE* outputFile2 = fopen("resultIntsGPU.txt", "w");
+        if (outputFile2 == NULL) {
+            perror("Unable to create the output file");
+            return 1;
+        }
+
+        // Write host_M3 to the result file
+        for (int i = 0; i < M3Rows; i++) {
+            for (int j = 0; j < M3Cols; j++) {
+                fprintf(outputFile2, "%d ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            }
+            fprintf(outputFile2, "\n");
+        }
+
+        // Close the result file
+        fclose(outputFile2);
+    }
 
     // Deallocate memory on the GPU and CPU
     cudaFree(device_M1);

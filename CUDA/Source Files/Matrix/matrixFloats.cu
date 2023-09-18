@@ -23,7 +23,7 @@ MatrixF createMatrixF(int rows, int cols) {
 }
 
 // Set all elements in the matrix to hold value 1.0f
-void populateWithOnesFloats(MatrixF matrix) {
+void populateWithOnesF(MatrixF matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
             matrix.data[i * matrix.cols + j] = 1.0f; // Change to float
