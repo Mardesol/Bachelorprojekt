@@ -69,8 +69,38 @@ __global__ void matrixAdditionSharedMemory(float* M1, float* M2, float* M3) {
     }
 }
 
+// Function to measure and record execution times to a file
+void measureAndRecordExecutionTimes(
+    const char* outputFileName,
+    Timer timer,
+    void (*kernel)(float*, float*, float*),
+    float* M1, float* M2, float* M3,
+    dim3 gridDim, dim3 blockDim
+) {
+    // Open a new file to write the result into
+    FILE* outputFile = fopen(outputFileName, "w");
+    if (outputFile == NULL) {
+        perror("Unable to create the output file");
+        return;
+    }
+
+    for (int i = 0; i < 100; i++) {
+        // Measure execution time for MMV1Sequential
+        beginTimer(timer);
+        cudaDeviceSynchronize();
+        kernel << <gridDim, blockDim >> > (M1, M2, M3);
+        cudaDeviceSynchronize();
+        float time = endTimerReturnTime(timer);
+
+        fprintf(outputFile, "%f ms\n", time);
+    }
+
+    // Close the output file
+    fclose(outputFile);
+}
+
 int main() {
-    // Timer measures the time spent on a process
+    // Timer measure time spent on a process
     Timer timer = createTimer();
 
     // Start the setup timer
@@ -87,10 +117,8 @@ int main() {
     M3 = createMatrixF(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnesF(M1);
-    populateWithOnesF(M2);
-    //populateWithRandomFloats(M1);
-    //populateWithRandomFloats(M2);
+    populateWithOnesFloats(M1);
+    populateWithOnesFloats(M2);
 
     // Stop the setup timer
     endTimer(timer, "setup");
@@ -101,61 +129,40 @@ int main() {
     // Allocate memory for matrices on the GPU
     float* device_M1, * device_M2, * device_M3;
 
-    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(float));
-    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(float));
-    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(float));
+    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(int));
+    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(int));
+    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(int));
 
-    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(float), cudaMemcpyHostToDevice);
+    // Copy input matrices from host to device
+    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(int), cudaMemcpyHostToDevice);
 
     // Stop the data transfer timer (CPU -> GPU / Host -> Device)
     endTimer(timer, "data transfer (CPU -> GPU)");
 
     // Define block and grid dimensions for CUDA kernel
-    dim3 blockDim(32, 32);
+    dim3 blockDim(16, 16);
+
+    if (M3Rows <= 16 && M3Cols <= 16) {
+        blockDim = dim3(M3Cols, M3Rows);  // Use matrix size for smaller matrices
+    }
+
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-    // Start the matrix addition timer
-    beginTimer(timer);
-
-    // Launch the CUDA kernel to perform matrix addition
-    matrixAdditionSharedMemory << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);
-
-    // Stop the matrix addition timer
-    endTimer(timer, "matrix addition (GPU)");
-
-    // Start the data transfer timer (GPU -> CPU / Device -> Host)
-    beginTimer(timer);
+    // Measure and record execution times
+    measureAndRecordExecutionTimes("Test/Float-MA1-SequentialResults.txt", timer, matrixAdditionSequential, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Float-MA2-ParallelV1.txt", timer, matrixAdditionParallelV1, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Float-MA3-ParallelV2.txt", timer, matrixAdditionParallelV2, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Float-MA4-SharedMemory.txt", timer, matrixAdditionSharedMemory, device_M1, device_M2, device_M3, gridDim, blockDim);
 
     // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
-
-    // Stop the data transfer timer (GPU -> CPU / Device -> Host)
-    endTimer(timer, "data transfer (GPU -> CPU)");
-
-    // Open a new file to write the result into
-    FILE* outputFile = fopen("resultFloats.txt", "w");
-    if (outputFile == NULL) {
-        perror("Unable to create the output file");
-        return 1;
-    }
-
-    // Write host_M3 to the result file
-    for (int i = 0; i < M3Rows; i++) {
-        for (int j = 0; j < M3Cols; j++) {
-            fprintf(outputFile, "%f ", M3.data[i * M3Rows + j]);
-        }
-        fprintf(outputFile, "\n");
-    }
-
-    // Close the result file
-    fclose(outputFile);
+    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
 
     // Deallocate memory on the GPU and CPU
     cudaFree(device_M1);
     cudaFree(device_M2);
     cudaFree(device_M3);
 
-    // End the program
+    // Exit program
     return 0;
 }

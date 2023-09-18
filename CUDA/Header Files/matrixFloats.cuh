@@ -1,5 +1,5 @@
-#ifndef MATRIXF_CUH
-#define MATRIXF_CUH
+#ifndef MATRIXFLOATS_CUH
+#define MATRIXFLOATS_CUH
 
 struct MatrixF {
     int rows;

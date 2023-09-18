@@ -15,8 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="Source Files\Addition\Int\additionTest.cu" />
-    <CudaCompile Include="Source Files\Addition\Int\testTimer.cu" />
-    <CudaCompile Include="Source Files\Multiplication\Int\multiplicationTest.cu" />
+  </ItemGroup>
+  <ItemGroup>
   </ItemGroup>
 </Project>

@@ -6,8 +6,8 @@
 #include <curand_kernel.h>
 
 // Create a matrix on the host
-MatrixF createMatrixFloats(int rows, int cols) {
-    MatrixFloats matrix;
+MatrixF createMatrixF(int rows, int cols) {
+    MatrixF matrix;
     matrix.rows = rows;
     matrix.cols = cols;
 
@@ -23,7 +23,7 @@ MatrixF createMatrixFloats(int rows, int cols) {
 }
 
 // Set all elements in the matrix to hold value 1.0f
-void populateWithOnesFloats(MatrixFloats matrix) {
+void populateWithOnesFloats(MatrixF matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
             matrix.data[i * matrix.cols + j] = 1.0f; // Change to float
@@ -32,7 +32,7 @@ void populateWithOnesFloats(MatrixFloats matrix) {
 }
 
 // Generate random floats on the CPU using srand
-void populateWithRandomFloats(MatrixFloats matrix) {
+void populateWithRandomFloats(MatrixF matrix) {
     srand(42);
 
     for (int i = 0; i < matrix.rows; i++) {
