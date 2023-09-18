@@ -14,3 +14,4 @@
 *.tlog
 Nsight/
 /Debug/
+*.csv

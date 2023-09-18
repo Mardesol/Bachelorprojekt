@@ -71,34 +71,34 @@ __global__ void MMV3SharedMemoryAndTiling(double* M1, double* M2, double* M3) {
 	}
 }
 
-// Function to measure and record execution times to a file
-void measureAndRecordExecutionTimes(
-	const char* outputFileName,
-	Timer timer,
+// Function to measure kernel execution time
+float measureKernelExecutionTime(
 	void (*kernel)(double*, double*, double*),
 	double* M1, double* M2, double* M3,
 	dim3 gridDim, dim3 blockDim
 ) {
-	// Open a new file to write the result into
-	FILE* outputFile = fopen(outputFileName, "w");
-	if (outputFile == NULL) {
-		perror("Unable to create the output file");
-		return;
-	}
+	Timer timer = createTimer();
+	beginTimer(timer);
 
+	cudaDeviceSynchronize();
+	kernel << <gridDim, blockDim >> > (M1, M2, M3);
+	cudaDeviceSynchronize();
+
+	return endTimerReturnTime(timer);
+}
+
+// Function to measure execution times and store them in an array
+void measureExecutionTimes(
+	float* executionTimes,
+	void (*kernel)(double*, double*, double*),
+	double* M1, double* M2, double* M3,
+	dim3 gridDim, dim3 blockDim
+) {
 	for (int i = 0; i < 100; i++) {
-		// Measure execution time for MMV1Sequential
-		beginTimer(timer);
-		cudaDeviceSynchronize();
-		kernel << <gridDim, blockDim >> > (M1, M2, M3);
-		cudaDeviceSynchronize();
-		float time = endTimerReturnTime(timer);
-
-		fprintf(outputFile, "%f ms\n", time);
+		// Measure execution time for the kernel
+		float time = measureKernelExecutionTime(kernel, M1, M2, M3, gridDim, blockDim);
+		executionTimes[i] = time;
 	}
-
-	// Close the output file
-	fclose(outputFile);
 }
 
 int main() {
@@ -152,10 +152,14 @@ int main() {
 
 	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
+	// Create an array to store execution times for each kernel
+	float executionTimes[3][100]; // 3 kernels, 100 executions each
+
 	// Measure and record execution times
-	measureAndRecordExecutionTimes("Test/MMV1SequentialResults.txt",	 timer, MMV1Sequential,			   device_M1, device_M2, device_M3, gridDim, blockDim);
-	measureAndRecordExecutionTimes("Test/MMV2Parallelism.txt",			 timer, MMV2Parallelism,		   device_M1, device_M2, device_M3, gridDim, blockDim);
-	measureAndRecordExecutionTimes("Test/MMV3SharedMemoryAndTiling.txt", timer, MMV3SharedMemoryAndTiling, device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[0], MMV1Sequential,			device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[1], MMV2Parallelism,			device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[2], MMV3SharedMemoryAndTiling, device_M1, device_M2, device_M3, gridDim, blockDim);
+
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
@@ -164,6 +168,25 @@ int main() {
 	cudaFree(device_M1);
 	cudaFree(device_M2);
 	cudaFree(device_M3);
+
+	// Open the output file for writing in append mode
+	FILE* outputFile = fopen("Test/Doubles-ExecutionTimes.csv", "a");
+	if (outputFile == NULL) {
+		perror("Unable to open the output file");
+		return 1;
+	}
+
+	// Write execution times to the output file in separate columns
+	fprintf(outputFile, "Sequential,Parallel,SharedMemoryAndTilling\n");
+	for (int i = 0; i < 100; i++) {
+		fprintf(outputFile, "%f,%f,%f\n",
+			executionTimes[0][i],
+			executionTimes[1][i],
+			executionTimes[2][i]);
+	}
+
+	// Close the output file
+	fclose(outputFile);
 
 	// Exit program
 	return 0;
