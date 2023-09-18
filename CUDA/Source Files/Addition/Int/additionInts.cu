@@ -8,12 +8,16 @@
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixInts.cu"
 
-const int M1Rows = 2000;
-const int M1Cols = 2000;
-const int M2Rows = 2000;
-const int M2Cols = 2000;
-const int M3Rows = M1Rows;
-const int M3Cols = M1Cols;
+const int rows = 200;
+const int cols = 200;
+
+const int M1Rows = rows;
+const int M2Rows = rows;
+const int M3Rows = rows;
+
+const int M3Cols = cols;
+const int M1Cols = cols;
+const int M2Cols = cols;
 
 // CUDA kernel to add two matrices sequentially
 __global__ void matrixAdditionSequential(int* M1, int* M2, int* M3) {
@@ -73,21 +77,20 @@ int main() {
     beginTimer(timer);
 
     // Define variables
-    Matrix M1;
-    Matrix M2;
-    Matrix M3;
+    MatrixI M1;
+    MatrixI M2;
+    MatrixI M3;
 
     // Create the matrix objects
-    M1 = createMatrix(M1Rows, M1Cols);
-    M2 = createMatrix(M2Rows, M2Cols);
-    M3 = createMatrix(M3Rows, M3Cols);
+    M1 = createMatrixI(M1Rows, M1Cols);
+    M2 = createMatrixI(M2Rows, M2Cols);
+    M3 = createMatrixI(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnes(M1);
-    populateWithOnes(M2);
+    populateWithOnesI(M1);
+    populateWithOnesI(M2);
     //populateWithRandomInts(M1);
     //populateWithRandomInts(M2);
-
 
     // Stop the setup timer
     endTimer(timer, "setup");

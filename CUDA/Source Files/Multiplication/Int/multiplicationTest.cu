@@ -112,18 +112,18 @@ int main() {
 	beginTimer(timer);
 
 	// Define variables
-	Matrix M1;
-	Matrix M2;
-	Matrix M3;
+	MatrixI M1;
+	MatrixI M2;
+	MatrixI M3;
 
 	// Create the matrix objects
-	M1 = createMatrix(M1Rows, M1Cols);
-	M2 = createMatrix(M2Rows, M2Cols);
-	M3 = createMatrix(M3Rows, M3Cols);
+	M1 = createMatrixI(M1Rows, M1Cols);
+	M2 = createMatrixI(M2Rows, M2Cols);
+	M3 = createMatrixI(M3Rows, M3Cols);
 
 	// Populate the matrices
-	populateWithOnes(M1);
-	populateWithOnes(M2);
+	populateWithOnesI(M1);
+	populateWithOnesI(M2);
 
 	// Stop the setup timer
 	endTimer(timer, "setup");

@@ -6,8 +6,8 @@
 #include <curand_kernel.h>
 
 // Create a matrix on the host
-Matrix createMatrix(int rows, int cols) {
-    Matrix matrix;
+MatrixI createMatrixI(int rows, int cols) {
+    MatrixI matrix;
     matrix.rows = rows;
     matrix.cols = cols;
 
@@ -23,7 +23,7 @@ Matrix createMatrix(int rows, int cols) {
 }
 
 // Set all elements in the matrix to hold value 1
-void populateWithOnes(Matrix matrix) {
+void populateWithOnesI(MatrixI matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
             matrix.data[i * matrix.cols + j] = 1;
@@ -33,7 +33,7 @@ void populateWithOnes(Matrix matrix) {
 
 
 // Generate random integers on the CPU using srand
-void populateWithRandomInts(Matrix matrix) {
+void populateWithRandomInts(MatrixI matrix) {
     srand(42);
 
     for (int i = 0; i < matrix.rows; i++) {

@@ -81,20 +81,20 @@ int main() {
     beginTimer(timer);
 
     // Define variables
-    MatrixFloats M1;
-    MatrixFloats M2;
-    MatrixFloats M3;
+    MatrixF M1;
+    MatrixF M2;
+    MatrixF M3;
     int M3Rows = M1Rows;
     int M3Cols = M2Cols;
 
     // Create the matrix objects
-    M1 = createMatrixFloats(M1Rows, M1Cols);
-    M2 = createMatrixFloats(M2Rows, M2Cols);
-    M3 = createMatrixFloats(M3Rows, M3Cols);
+    M1 = createMatrixF(M1Rows, M1Cols);
+    M2 = createMatrixF(M2Rows, M2Cols);
+    M3 = createMatrixF(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnesFloats(M1);
-    populateWithOnesFloats(M2);
+    populateWithOnesF(M1);
+    populateWithOnesF(M2);
 
     // Stop the setup timer
     endTimer(timer, "setup");

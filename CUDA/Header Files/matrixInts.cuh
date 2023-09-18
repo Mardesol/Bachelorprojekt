@@ -1,15 +1,15 @@
 #ifndef MATRIXINTS_CUH
 #define MATRIXINTS_CUH
 
-struct Matrix {
+struct MatrixI {
     int rows;
     int cols;
     int* data;
 };
 
-Matrix createMatrix(int rows, int cols);
+MatrixI createMatrixI(int rows, int cols);
 
-void populateWithOnes(Matrix matrix);
-void populateWithRandomInts(Matrix matrix);
+void populateWithOnesI(MatrixI matrix);
+void populateWithRandomInts(MatrixI matrix);
 
 #endif

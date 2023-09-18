@@ -8,8 +8,8 @@
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixInts.cu"
 
-const int rows = 100;
-const int cols = 100;
+const int rows = 200;
+const int cols = 200;
 
 const int M1Rows = rows;
 const int M2Rows = rows;
@@ -88,7 +88,7 @@ void measureAndRecordExecutionTimes(
         // Measure execution time for MMV1Sequential
         beginTimer(timer);
         cudaDeviceSynchronize();
-        kernel <<<gridDim, blockDim>>>(M1, M2, M3);
+        kernel << <gridDim, blockDim >> > (M1, M2, M3);
         cudaDeviceSynchronize();
         float time = endTimerReturnTime(timer);
 
@@ -107,18 +107,18 @@ int main() {
     beginTimer(timer);
 
     // Define variables
-    Matrix M1;
-    Matrix M2;
-    Matrix M3;
+    MatrixI M1;
+    MatrixI M2;
+    MatrixI M3;
 
     // Create the matrix objects
-    M1 = createMatrix(M1Rows, M1Cols);
-    M2 = createMatrix(M2Rows, M2Cols);
-    M3 = createMatrix(M3Rows, M3Cols);
+    M1 = createMatrixI(M1Rows, M1Cols);
+    M2 = createMatrixI(M2Rows, M2Cols);
+    M3 = createMatrixI(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnes(M1);
-    populateWithOnes(M2);
+    populateWithOnesI(M1);
+    populateWithOnesI(M2);
 
     // Stop the setup timer
     endTimer(timer, "setup");
@@ -150,10 +150,10 @@ int main() {
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
     // Measure and record execution times
-    measureAndRecordExecutionTimes("Test/MA1SequentialResults.txt", timer, matrixAdditionSequential,   device_M1, device_M2, device_M3, gridDim, blockDim);
-    measureAndRecordExecutionTimes("Test/MA2ParallelV1.txt",        timer, matrixAdditionParallelV1,   device_M1, device_M2, device_M3, gridDim, blockDim);
-    measureAndRecordExecutionTimes("Test/MA3ParallelV2.txt",        timer, matrixAdditionParallelV2,   device_M1, device_M2, device_M3, gridDim, blockDim);
-    measureAndRecordExecutionTimes("Test/MASharedMemory.txt",       timer, matrixAdditionSharedMemory, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Int-MA1-SequentialResults.txt", timer, matrixAdditionSequential, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Int-MA2-ParallelV1.txt", timer, matrixAdditionParallelV1, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Int-MA3-ParallelV2.txt", timer, matrixAdditionParallelV2, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureAndRecordExecutionTimes("Test/Int-MA4-SharedMemory.txt", timer, matrixAdditionSharedMemory, device_M1, device_M2, device_M3, gridDim, blockDim);
 
     // Copy the result matrix from device to host
     cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
