@@ -10,5 +10,6 @@
 *.lib
 *.exp
 *.ncu-rep
+*.deps
 Nsight/
 /Debug/
