@@ -11,5 +11,6 @@
 *.exp
 *.ncu-rep
 *.deps
+*.tlog
 Nsight/
 /Debug/
