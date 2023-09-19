@@ -8,6 +8,7 @@
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixInts.cu"
 #include "..\..\Matrix\matrixOperationsCPU.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const int rows = 10;
 const int cols = 10;
@@ -71,6 +72,11 @@ __global__ void matrixAdditionSharedMemory(int* M1, int* M2, int* M3) {
 }
 
 int main() {
+    if (!additionCheck(M1Rows, M1Cols, M2Rows, M2Cols)) {
+        perror("Matrices must have the same size");
+        return 1;
+    }
+
     // Timer measure time spent on a process
     Timer timer = createTimer();
 

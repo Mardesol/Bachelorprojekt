@@ -7,6 +7,8 @@
 
 #include "..\..\Matrix\matrixFloats.cu" // Assuming you have a matrixFloats.cu file
 #include "..\..\Timer\timer.cu"
+#include "..\..\Matrix\matrixOperationsCPU.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const int M1Rows = 200;
 const int M1Cols = 200;
@@ -73,6 +75,10 @@ __global__ void MMV3SharedMemoryAndTiling(float* M1, float* M2, float* M3) {
 }
 
 int main() {
+    if (!multiplicationCheck(M1Cols, M2Rows)) {
+        perror("Matrices must be compatible");
+        return 1;
+    }
 
     // Timer measure time spent on a process
     Timer timer = createTimer();
@@ -95,6 +101,10 @@ int main() {
     // Populate the matrices
     populateWithOnesF(M1);
     populateWithOnesF(M2);
+
+    //Setup a CPU comparison matrix
+    MatrixF MCPU = createMatrixF(M3Rows, M3Cols);
+    additionFloat(M1.data, M2.data, MCPU.data, M3Rows, M3Cols);
 
     // Stop the setup timer
     endTimer(timer, "setup");
@@ -164,6 +174,49 @@ int main() {
 
     // Close the result file
     fclose(outputFile);
+
+    //Validate result by comparing to CPU calculations
+    bool valid = compareMatricesFloat(MCPU.data, M3.data, M3Rows, M3Cols);
+    if (valid) {
+        printf("Matrix multiplication results match!\n");
+    }
+    else {
+        printf("Matrix multiplication results do not match.\n");
+        // Write the matrices to text files for analysis
+        FILE* outputFile1 = fopen("resultFloatsCPU.txt", "w");
+        if (outputFile1 == NULL) {
+            perror("Unable to create the output file");
+            return 1;
+        }
+
+        // Write host_M3 to the result file
+        for (int i = 0; i < M3Rows; i++) {
+            for (int j = 0; j < M3Cols; j++) {
+                fprintf(outputFile1, "%f ", MCPU.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            }
+            fprintf(outputFile1, "\n");
+        }
+
+        // Close the result file
+        fclose(outputFile1);
+
+        FILE* outputFile2 = fopen("resultFloatsGPU.txt", "w");
+        if (outputFile2 == NULL) {
+            perror("Unable to create the output file");
+            return 1;
+        }
+
+        // Write host_M3 to the result file
+        for (int i = 0; i < M3Rows; i++) {
+            for (int j = 0; j < M3Cols; j++) {
+                fprintf(outputFile2, "%f ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            }
+            fprintf(outputFile2, "\n");
+        }
+
+        // Close the result file
+        fclose(outputFile2);
+    }
 
     // Deallocate memory on the GPU and CPU
     cudaFree(device_M1);

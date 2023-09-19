@@ -7,6 +7,7 @@
 
 #include "..\..\Matrix\matrixDoubles.cu"
 #include "..\..\Timer\timer.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const int M1Rows = 100;
 const int M1Cols = 100;
@@ -102,6 +103,11 @@ void measureExecutionTimes(
 }
 
 int main() {
+	if (!multiplicationCheck(M1Cols, M2Rows)) {
+		perror("Matrices must be compatible");
+		return 1;
+	}
+
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 

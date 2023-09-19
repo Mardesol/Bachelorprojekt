@@ -7,6 +7,7 @@
 
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixFloats.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const int rows = 200;
 const int cols = 200;
@@ -100,6 +101,11 @@ void measureExecutionTimes(
 }
 
 int main() {
+    if (!additionCheck(M1Rows, M1Cols, M2Rows, M2Cols)) {
+        perror("Matrices must have the same size");
+        return 1;
+    }
+
     // Timer measure time spent on a process
     Timer timer = createTimer();
 

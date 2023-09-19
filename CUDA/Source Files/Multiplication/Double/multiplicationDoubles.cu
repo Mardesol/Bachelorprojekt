@@ -7,6 +7,8 @@
 
 #include "..\..\Matrix\matrixDoubles.cu"  // Update to the header file for double matrices
 #include "..\..\Timer\timer.cu"
+#include "..\..\Matrix\matrixOperationsCPU.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const int M1Rows = 200;
 const int M1Cols = 200;
@@ -70,6 +72,11 @@ __global__ void MMV3SharedMemoryAndTiling(double* M1, double* M2, double* M3) {
 }
 
 int main() {
+    if (!multiplicationCheck(M1Cols, M2Rows)) {
+        perror("Matrices must be compatible");
+        return 1;
+    }
+
     // Timer measure time spent on a process
     Timer timer = createTimer();
 
@@ -77,20 +84,24 @@ int main() {
     beginTimer(timer);
 
     // Define variables
-    MatrixDoubles M1;  // Use MatrixDouble for double data type
-    MatrixDoubles M2;  // Use MatrixDouble for double data type
-    MatrixDoubles M3;  // Use MatrixDouble for double data type
+    MatrixD M1;  // Use MatrixDouble for double data type
+    MatrixD M2;  // Use MatrixDouble for double data type
+    MatrixD M3;  // Use MatrixDouble for double data type
     int M3Rows = M1Rows;
     int M3Cols = M2Cols;
 
     // Create the matrix objects
-    M1 = createMatrixDoubles(M1Rows, M1Cols);  // Use createMatrixDouble
-    M2 = createMatrixDoubles(M2Rows, M2Cols);  // Use createMatrixDouble
-    M3 = createMatrixDoubles(M3Rows, M3Cols);  // Use createMatrixDouble
+    M1 = createMatrixD(M1Rows, M1Cols);  // Use createMatrixDouble
+    M2 = createMatrixD(M2Rows, M2Cols);  // Use createMatrixDouble
+    M3 = createMatrixD(M3Rows, M3Cols);  // Use createMatrixDouble
 
     // Populate the matrices
-    populateWithOnesDoubles(M1);  // Use populateWithOnesDouble
-    populateWithOnesDoubles(M2);  // Use populateWithOnesDouble
+    populateWithOnesD(M1);  // Use populateWithOnesDouble
+    populateWithOnesD(M2);  // Use populateWithOnesDouble
+
+    //Setup a CPU comparison matrix
+    MatrixD MCPU = createMatrixD(M3Rows, M3Cols);
+    additionDouble(M1.data, M2.data, MCPU.data, M3Rows, M3Cols);
 
     // Stop the setup timer
     endTimer(timer, "setup");
@@ -160,6 +171,49 @@ int main() {
 
     // Close the result file
     fclose(outputFile);
+
+    //Validate result by comparing to CPU calculations
+    bool valid = compareMatricesDouble(MCPU.data, M3.data, M3Rows, M3Cols);
+    if (valid) {
+        printf("Matrix multiplication results match!\n");
+    }
+    else {
+        printf("Matrix multiplication results do not match.\n");
+        // Write the matrices to text files for analysis
+        FILE* outputFile1 = fopen("resultDoubleCPU.txt", "w");
+        if (outputFile1 == NULL) {
+            perror("Unable to create the output file");
+            return 1;
+        }
+
+        // Write host_M3 to the result file
+        for (int i = 0; i < M3Rows; i++) {
+            for (int j = 0; j < M3Cols; j++) {
+                fprintf(outputFile1, "%lf ", MCPU.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            }
+            fprintf(outputFile1, "\n");
+        }
+
+        // Close the result file
+        fclose(outputFile1);
+
+        FILE* outputFile2 = fopen("resultDoubleGPU.txt", "w");
+        if (outputFile2 == NULL) {
+            perror("Unable to create the output file");
+            return 1;
+        }
+
+        // Write host_M3 to the result file
+        for (int i = 0; i < M3Rows; i++) {
+            for (int j = 0; j < M3Cols; j++) {
+                fprintf(outputFile2, "%lf ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            }
+            fprintf(outputFile2, "\n");
+        }
+
+        // Close the result file
+        fclose(outputFile2);
+    }
 
     // Deallocate memory on the GPU and CPU
     cudaFree(device_M1);
