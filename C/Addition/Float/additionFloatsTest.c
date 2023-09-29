@@ -6,7 +6,7 @@
 #include "../../Matrix/Float/matrixFloats.c"
 #include "../../Timer/timer.c"
 
-void additionSimple(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
+void additionSequential(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
 {
     for(int i = 0; i < M3.rows; i++) {
         for(int j = 0; j < M3.cols; j++) {
@@ -14,6 +14,8 @@ void additionSimple(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
         }
     }
 }
+
+#define MATRIX_SIZE 5000
 
 int main() 
 {
@@ -25,9 +27,9 @@ int main()
     MatrixFloats M2;
     MatrixFloats M3;
 
-    M1 = createMatrixFloats(2000, 2000);
-    M2 = createMatrixFloats(2000, 2000);
-    M3 = createMatrixFloats(2000, 2000);
+    M1 = createMatrixFloats(MATRIX_SIZE, MATRIX_SIZE);
+    M2 = createMatrixFloats(MATRIX_SIZE, MATRIX_SIZE);
+    M3 = createMatrixFloats(MATRIX_SIZE, MATRIX_SIZE);
 
     // Read data into M1 and M2
     populateWithRandomFloats(M1);
@@ -43,13 +45,17 @@ int main()
         // Start measuring time for this iteration
         beginTimer(&timer);
         // Perform addition
-        additionSimple(M1, M2, M3);
+        additionSequential(M1, M2, M3);
         // End measuring time for this iteration
         executionTimes[i] = endTimerFloat(&timer);
     }
 
     // Open a new file to write result into
-    FILE *outputFile = fopen("FloatsResult.txt", "w");
+    
+    char filename[100];
+    snprintf(filename, 100, "FloatsResult%d.txt", MATRIX_SIZE);
+
+    FILE *outputFile = fopen(filename, "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;
