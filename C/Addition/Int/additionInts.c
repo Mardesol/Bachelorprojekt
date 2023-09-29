@@ -3,10 +3,10 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "../Matrix/matrix.c"
-#include "../Timer/timer.c"
+#include "../../Matrix/Int/matrixInts.c"
+#include "../../Timer/timer.c"
 
-void additionSimple(Matrix M1, Matrix M2, Matrix M3)
+void additionSimple(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 {
     for(int i = 0; i < M3.rows; i++) {
         for(int j = 0; j < M3.cols; j++) {
@@ -21,17 +21,19 @@ int main()
     Timer timer = createTimer();
     beginTimer(&timer);
 
-    Matrix M1;
-    Matrix M2;
-    Matrix M3;
+    MatrixInts M1;
+    MatrixInts M2;
+    MatrixInts M3;
 
-    M1 = createMatrix(500, 500);
-    M2 = createMatrix(500, 500);
-    M3 = createMatrix(500, 500);
+    M1 = createMatrixInts(500, 500);
+    M2 = createMatrixInts(500, 500);
+    M3 = createMatrixInts(500, 500);
 
     // Read data into M1 and M2
-    populateWithRandomInts(M1);
-    populateWithRandomInts(M2);
+    populateWithOnesInts(M1);
+    populateWithOnesInts(M2);
+    //populateWithRandomInts(M1);
+    //populateWithRandomInts(M2);
 
     // End measuring time OS spends on process
     endTimer(&timer, "setup", 5);

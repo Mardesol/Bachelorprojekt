@@ -27,3 +27,12 @@ void endTimer(struct Timer *timer, char *message, size_t messageLength)
 	double elapsed = seconds + microseconds * 1e-6;
 	printf("Time spent on %s: %f seconds\n",message, elapsed);
 }
+
+float endTimerFloat(struct Timer *timer)
+{
+	gettimeofday(&timer->end, 0);
+	long seconds = timer->end.tv_sec - timer->begin.tv_sec;
+	long microseconds = timer->end.tv_usec - timer->begin.tv_usec;
+	float elapsed = seconds + microseconds * 1e-6;
+	return elapsed;
+}
