@@ -1,13 +1,13 @@
-#include "matrix.h"
+#include "matrixFloats.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 // Create a matrix
-struct Matrix createMatrix(int rows, int cols) {
-    struct Matrix matrix;
+struct MatrixFloats createMatrixFloats(int rows, int cols) {
+    struct MatrixFloats matrix;
     matrix.rows = rows;
     matrix.cols = cols;
-    matrix.data = (int *)malloc(rows * cols * sizeof(int));
+    matrix.data = (float *)malloc(rows * cols * sizeof(float));
     
     if (matrix.data == NULL) {
         printf("Memory allocation failed.\n");
@@ -18,7 +18,7 @@ struct Matrix createMatrix(int rows, int cols) {
 }
 
 // Set all indices in matrix to hold value 1
-void populateWithOnes(Matrix matrix) {
+void populateWithOnesFloats(MatrixFloats matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
             matrix.data[i * matrix.cols + j] = 1;
@@ -27,7 +27,7 @@ void populateWithOnes(Matrix matrix) {
 }
 
 // Generate random integers on the CPU using srand
-void populateWithRandomInts(Matrix matrix) {
+void populateWithRandomFloats(MatrixFloats matrix) {
     srand(42);
 
     for (int i = 0; i < matrix.rows; i++) {
@@ -36,4 +36,3 @@ void populateWithRandomInts(Matrix matrix) {
         }
     }
 }
-

@@ -3,10 +3,10 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "../Matrix/matrix.c"
+#include "../Matrix/Float/matrixFloats.c"
 #include "../Timer/timer.c"
 
-void multiplicationSimple(Matrix M1, Matrix M2, Matrix M3)
+void multiplicationSimple(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
 {
     for(int i = 0; i < M1.rows; i++) {
         for(int j = 0; j < M2.cols; j++) {
@@ -21,7 +21,7 @@ void multiplicationSimple(Matrix M1, Matrix M2, Matrix M3)
     }
 }
 
-void multiplicationV2(Matrix M1, Matrix M2, Matrix M3)
+void multiplicationV2(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
 {
     for(int i = 0; i < M1.rows; i++) {
             int pos1 = i * M1.cols;
@@ -47,13 +47,13 @@ int main()
     Timer timer = createTimer();
     beginTimer(&timer);
 
-    Matrix M1;
-    Matrix M2;
-    Matrix M3;
+    MatrixFloats M1;
+    MatrixFloats M2;
+    MatrixFloats M3;
 
-    M1 = createMatrix(500, 500);
-    M2 = createMatrix(500, 500);
-    M3 = createMatrix(500, 500);
+    M1 = createMatrixFloats(500, 500);
+    M2 = createMatrixFloats(500, 500);
+    M3 = createMatrixFloats(500, 500);
 
     // Read data into M1 and M2
     populateWithRandomInts(M1);
