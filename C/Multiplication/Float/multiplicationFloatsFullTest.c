@@ -5,14 +5,40 @@
 #include "../../Matrix/Float/matrixFloats.c"
 #include "../../Timer/timer.c"
 
-#define MATRIX_SIZES {200, 400, 800, 1600, 3200, 6400}
-#define NUM_SIZES 6
+#define MATRIX_SIZES {50, 100, 200, 300, 400}
+#define NUM_SIZES 5
 
-void additionSequential(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
+void multiplicationSequential(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
 {
-    for(int i = 0; i < M3.rows; i++) {
-        for(int j = 0; j < M3.cols; j++) {
-            M3.data[i * M3.cols + j] = M1.data[i * M1.cols + j] + M2.data[i * M2.cols + j];
+    for(int i = 0; i < M1.rows; i++) {
+        for(int j = 0; j < M2.cols; j++) {
+            int sum = 0;
+            for (int k = 0; k < M1.cols; k++) {
+                int a = M1.data[i * M1.cols + k];
+                int b = M2.data[k * M2.cols + j];
+                sum = sum + (a * b);
+            }
+            M3.data[i * M3.cols + j] = sum;
+        }
+    }
+}
+
+void multiplicationV2(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
+{
+    for(int i = 0; i < M1.rows; i++) {
+            int pos1 = i * M1.cols;
+            int pos2 = i * M3.cols;
+        
+        for(int j = 0; j < M2.cols; j++) {
+            int sum = 0;
+            
+            for (int k = 0; k < M1.cols; k++) {
+                int a = M1.data[pos1 + k];
+                int b = M2.data[k * M2.cols + j];
+                sum = sum + (a * b);
+            }
+
+            M3.data[pos2 + j] = sum;
         }
     }
 }
@@ -24,8 +50,8 @@ int main()
     const int sizes[NUM_SIZES] = MATRIX_SIZES;
     double executionTimes[NUM_SIZES][100];
 
-    // Create results file
-    FILE *outputFile = fopen("Test/Addition_Floats_Runtime_All_Matrices.csv", "w");
+    // Create results file in the Test directory
+    FILE *outputFile = fopen("Test/Multiplication_Floats_Runtime_All_Matrices.csv", "w");
     if (!outputFile) {
         perror("Unable to create the output file");
         return 1;
@@ -53,7 +79,7 @@ int main()
             populateWithRandomFloats(M2);
 
             beginTimer(&timer);
-            additionSequential(M1, M2, M3);
+            multiplicationSequential(M1, M2, M3);
             double timeTaken = endTimerDouble(&timer);
 
             executionTimes[s][run] = timeTaken;
