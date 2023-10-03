@@ -1,16 +1,19 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <sys/time.h>
+#include <windows.h>
+#include <time.h>
 
 typedef struct Timer {
-	struct timeval begin;
-	struct timeval end;
+    LARGE_INTEGER begin;
+    LARGE_INTEGER end;
+    LARGE_INTEGER frequency;
 } Timer;
+
 
 Timer createTimer();
 void beginTimer(Timer *timer);
 void endTimer(Timer *timer, char *message, size_t messageLength);
-float endTimerFloat(struct Timer *timer);
+double endTimerDouble(Timer *timer);
 
 #endif

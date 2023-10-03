@@ -1,38 +1,27 @@
 #include "timer.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#include <time.h>
 
-struct Timer createTimer()
+Timer createTimer()
 {
-	struct Timer timer;
-	struct timeval begin, end;
-	timer.begin = begin;
-	timer.end = end;
-
-	return timer;
+    Timer timer;
+    QueryPerformanceFrequency(&timer.frequency);
+    return timer;
 }
 
-void beginTimer(struct Timer *timer)
+void beginTimer(Timer *timer)
 {
-	gettimeofday(&timer->begin, 0);
+    QueryPerformanceCounter(&timer->begin);
 }
 
-void endTimer(struct Timer *timer, char *message, size_t messageLength)
+void endTimer(Timer *timer, char *message, size_t messageLength)
 {
-	gettimeofday(&timer->end, 0);
-	long seconds = timer->end.tv_sec - timer->begin.tv_sec;
-	long microseconds = timer->end.tv_usec - timer->begin.tv_usec;
-	double elapsed = seconds + microseconds * 1e-6;
-	printf("Time spent on %s: %f seconds\n",message, elapsed);
+    QueryPerformanceCounter(&timer->end);
+    double elapsed = (double)(timer->end.QuadPart - timer->begin.QuadPart) / timer->frequency.QuadPart;
+    printf("Time spent on %s: %f seconds\n", message, elapsed);
 }
 
-float endTimerFloat(struct Timer *timer)
+double endTimerDouble(Timer *timer)
 {
-	gettimeofday(&timer->end, 0);
-	long seconds = timer->end.tv_sec - timer->begin.tv_sec;
-	long microseconds = timer->end.tv_usec - timer->begin.tv_usec;
-	float elapsed = seconds + microseconds * 1e-6;
-	return elapsed;
+    QueryPerformanceCounter(&timer->end);
+    return (double)(timer->end.QuadPart - timer->begin.QuadPart) / timer->frequency.QuadPart;
 }
