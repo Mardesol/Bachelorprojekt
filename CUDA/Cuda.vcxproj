@@ -128,8 +128,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
+    <CudaCompile Include="Source Files\Multiplication\Double\multiplicationDoublesKernels.cu" />
+    <CudaCompile Include="Source Files\Multiplication\Float\multiplicationFloatsKernels.cu" />
+    <CudaCompile Include="Source Files\Multiplication\Int\multiplicationIntsKernels.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

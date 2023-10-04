@@ -20,13 +20,15 @@ void beginTimer(Timer timer)
 	cudaEventRecord(timer.start, 0);
 }
 
-void endTimer(Timer timer, const char* message)
+void endTimer(Timer timer, const char* message, bool printDebug)
 {
 	float timeElapsed;
 	cudaEventRecord(timer.stop, 0);
 	cudaEventSynchronize(timer.stop);
 	cudaEventElapsedTime(&timeElapsed, timer.start, timer.stop);
-	printf("Time spent on %s: %f ms\n", message, timeElapsed);
+	
+	if (printDebug)
+		printf("Time spent on %s: %f ms\n", message, timeElapsed);
 }
 
 float endTimerReturnTime(Timer timer)

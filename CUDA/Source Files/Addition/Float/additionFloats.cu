@@ -1,73 +1,6 @@
-#include "cuda_runtime.h"
-#include "cuda_runtime_api.h"
-#include "device_launch_parameters.h"
+#include "additionFloatsKernels.cu"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "..\..\Timer\timer.cu" 
-#include "..\..\Matrix\matrixFloats.cu"
-
-const int rows = 200;
-const int cols = 200;
-
-const int M1Rows = rows;
-const int M2Rows = rows;
-const int M3Rows = rows;
-
-const int M3Cols = cols;
-const int M1Cols = cols;
-const int M2Cols = cols;
-
-// CUDA kernel to add two matrices sequentially
-__global__ void matrixAdditionSequential(float* M1, float* M2, float* M3) {
-    for (int i = 0; i < M1Rows; i++) {
-        for (int j = 0; j < M1Cols; j++) {
-            M3[M1Rows * i + j] = M1[M1Rows * i + j] + M2[M1Rows * i + j];
-        }
-    }
-}
-
-// CUDA kernel to add two matrices in parallel, utilizing thread-level parallelism
-__global__ void matrixAdditionParallelV1(float* M1, float* M2, float* M3) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (index < M3Rows * M3Cols) {
-        M3[index] = M1[index] + M2[index];
-    }
-}
-
-// CUDA kernel to add two matrices in parallel, utilizing both thread and block level parallelism
-__global__ void matrixAdditionParallelV2(float* M1, float* M2, float* M3) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (row < M3Rows && col < M3Cols) {
-        int index = row * M3Rows + col;
-        M3[index] = M1[index] + M2[index];
-    }
-}
-
-// CUDA kernel to add two matrices in parallel, utilizing both thread and block level parallelism, as well as shared memory
-__global__ void matrixAdditionSharedMemory(float* M1, float* M2, float* M3) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    __shared__ float sharedMemory1[16];
-    __shared__ float sharedMemory2[16];
-
-    int index = row * M3Rows + col;
-
-    // Load data into shared memory
-    sharedMemory1[threadIdx.x] = M1[index];
-    sharedMemory2[threadIdx.x] = M2[index];
-
-    __syncthreads();  // Ensure all threads have loaded data
-
-    if (row < M3Rows && col < M3Cols) {
-        M3[index] = sharedMemory1[threadIdx.x] + sharedMemory2[threadIdx.x];
-    }
-}
+const bool printDebugMessages = false;
 
 int main() {
     // Timer measures the time spent on a process
@@ -76,65 +9,56 @@ int main() {
     // Start the setup timer
     beginTimer(timer);
 
-    // Define variables
-    MatrixF M1;
-    MatrixF M2;
-    MatrixF M3;
-
     // Create the matrix objects
-    M1 = createMatrixF(M1Rows, M1Cols);
-    M2 = createMatrixF(M2Rows, M2Cols);
-    M3 = createMatrixF(M3Rows, M3Cols);
+    MatrixF M1 = createMatrixFloats(M1Rows, M1Cols);
+    MatrixF M2 = createMatrixFloats(M2Rows, M2Cols);
+    MatrixF M3 = createMatrixFloats(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnesF(M1);
-    populateWithOnesF(M2);
-    //populateWithRandomFloats(M1);
-    //populateWithRandomFloats(M2);
+    populateWithRandomFloats(M1);
+    populateWithRandomFloats(M2);
 
     // Stop the setup timer
-    endTimer(timer, "setup");
+    endTimer(timer, "setup", printDebugMessages);
 
     // Start the data transfer timer (CPU -> GPU / Host -> Device)
     beginTimer(timer);
 
-    // Allocate memory for matrices on the GPU
+    // Declare the matrix objects to be stored on the device
     float* device_M1, * device_M2, * device_M3;
 
-    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(float));
+    // Allocate memory for matrices on the GPU
+    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(float));                                                
     cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(float));
     cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(float));
 
-    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(float), cudaMemcpyHostToDevice);
+    // Copy input matrices from host to device
+    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(float), cudaMemcpyHostToDevice);                        
     cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(float), cudaMemcpyHostToDevice);
 
     // Stop the data transfer timer (CPU -> GPU / Host -> Device)
-    endTimer(timer, "data transfer (CPU -> GPU)");
+    endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
 
     // Define block and grid dimensions for CUDA kernel
     dim3 blockDim(32, 32);
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-    // Start the matrix addition timer
-    beginTimer(timer);
+    // Time the matrix addition
+    const char* kernelName;
+    kernelName = "SharedMemory";                                                                                    // Should reflect the chosen kernel, to name output file accordingly
+    beginTimer(timer);                                                                              
+    SharedMemory <<<gridDim, blockDim >>> (device_M1, device_M2, device_M3);                                        // Launch the CUDA kernel to perform matrix addition
+    endTimer(timer, "matrix addition (GPU)", printDebugMessages);
 
-    // Launch the CUDA kernel to perform matrix addition
-    matrixAdditionSharedMemory << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);
-
-    // Stop the matrix addition timer
-    endTimer(timer, "matrix addition (GPU)");
-
-    // Start the data transfer timer (GPU -> CPU / Device -> Host)
-    beginTimer(timer);
-
-    // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
-
-    // Stop the data transfer timer (GPU -> CPU / Device -> Host)
-    endTimer(timer, "data transfer (GPU -> CPU)");
+    // Time transfer from device to host
+    beginTimer(timer);                                                                                              // Start the data transfer timer (GPU -> CPU / Device -> Host)
+    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);                        // Copy the result matrix from device to host
+    endTimer(timer, "data transfer (GPU -> CPU)", printDebugMessages);                                              // Stop the data transfer timer (GPU -> CPU / Device -> Host)
 
     // Open a new file to write the result into
-    FILE* outputFile = fopen("resultFloats.txt", "w");
+    char fileName[100];                                                                                             // Max length filename (Just needs to be long enough)
+    sprintf(fileName, "Test/Addition_%s_Floats_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols);         // Customize filename to reflect size of result matrix
+    FILE* outputFile = fopen(fileName, "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;

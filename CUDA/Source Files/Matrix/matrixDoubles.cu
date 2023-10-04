@@ -6,7 +6,7 @@
 #include <curand_kernel.h>
 
 // Create a matrix on the host
-MatrixD createMatrixD(int rows, int cols) {
+MatrixD createMatrixDoubles(int rows, int cols) {
     MatrixD matrix;
     matrix.rows = rows;
     matrix.cols = cols;
@@ -23,7 +23,7 @@ MatrixD createMatrixD(int rows, int cols) {
 }
 
 // Set all elements in the matrix to hold value 1.0
-void populateWithOnesD(MatrixD matrix) {
+void populateWithOnesDoubles(MatrixD matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
             matrix.data[i * matrix.cols + j] = 1.0;

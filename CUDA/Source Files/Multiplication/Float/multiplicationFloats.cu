@@ -1,103 +1,25 @@
-#include "cuda_runtime.h"
-#include "cuda_runtime_api.h"
-#include "device_launch_parameters.h"
+#include "multiplicationFloatsKernels.cu"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "..\..\Matrix\matrixFloats.cu" // Assuming you have a matrixFloats.cu file
-#include "..\..\Timer\timer.cu"
-
-const int M1Rows = 200;
-const int M1Cols = 200;
-const int M2Rows = 200;
-const int M2Cols = 200;
-
-__global__ void MMV1Sequential(float* M1, float* M2, float* M3) {
-
-    for (int i = 0; i < M1Rows; i++) {
-        for (int j = 0; j < M2Cols; j++) {
-            float sum = 0.0f;
-            for (int k = 0; k < M1Cols; k++) {
-                sum += M1[i * M1Cols + k] *
-                    M2[k * M2Cols + j];
-            }
-            M3[i * M2Cols + j] = sum;
-        }
-    }
-}
-
-__global__ void MMV2Parallelism(float* M1, float* M2, float* M3) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (row < M1Rows && col < M2Cols) {
-        float sum = 0.0f;
-
-        for (int i = 0; i < M1Cols; i++) {
-            sum += M1[row * M1Cols + i] *
-                M2[i * M2Cols + col];
-        }
-        M3[row * M2Cols + col] = sum;
-    }
-}
-
-__global__ void MMV3SharedMemoryAndTiling(float* M1, float* M2, float* M3) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    // Allocate shared memory
-    __shared__ float sharedMemory1[16];
-    __shared__ float sharedMemory2[16];
-
-    float sum = 0.0f;
-
-    // Read into shared memory in a coalescing manner
-    for (int i = 0; i < M1Cols; i += blockDim.x) {
-        sharedMemory1[threadIdx.x] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0.0f;
-        sharedMemory2[threadIdx.y] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0.0f;
-
-        __syncthreads();
-
-        // Perform the multiplication
-        for (int j = 0; j < blockDim.x; j++) {
-            sum += sharedMemory1[j] * sharedMemory2[j];
-        }
-
-        __syncthreads();
-    }
-
-    if (row < M1Rows && col < M2Cols) {
-        M3[row * M2Cols + col] = sum;
-    }
-}
+const bool printDebugMessages = false;
 
 int main() {
-
     // Timer measure time spent on a process
     Timer timer = createTimer();
 
     // Start the setup timer
     beginTimer(timer);
 
-    // Define variables
-    MatrixF M1;
-    MatrixF M2;
-    MatrixF M3;
-    int M3Rows = M1Rows;
-    int M3Cols = M2Cols;
-
     // Create the matrix objects
-    M1 = createMatrixF(M1Rows, M1Cols);
-    M2 = createMatrixF(M2Rows, M2Cols);
-    M3 = createMatrixF(M3Rows, M3Cols);
+    MatrixF M1 = createMatrixF(M1Rows, M1Cols);
+    MatrixF M2 = createMatrixF(M2Rows, M2Cols);
+    MatrixF M3 = createMatrixF(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnesF(M1);
-    populateWithOnesF(M2);
+    populateWithRandomFloats(M1);
+    populateWithRandomFloats(M2);
 
     // Stop the setup timer
-    endTimer(timer, "setup");
+    endTimer(timer, "setup", printDebugMessages);
 
     // Start the data transfer timer (CPU -> GPU / Host -> Device)
     beginTimer(timer);
@@ -116,7 +38,7 @@ int main() {
     cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(float), cudaMemcpyHostToDevice);
 
     // Stop the data transfer timer (CPU -> GPU / Host -> Device)
-    endTimer(timer, "data transfer (CPU -> GPU)");
+    endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
 
     // Define block and grid dimensions for CUDA kernel
     dim3 blockDim(16, 16);
@@ -127,28 +49,22 @@ int main() {
 
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-    // Start the matrix addition timer
+    // Time the matrix multiplication
+    const char* kernelName;
+    kernelName = "SharedMemoryAndTiling";                                                                                   // Should reflect the chosen kernel, to name output file accordingly
     beginTimer(timer);
+    SharedMemoryAndTiling << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);                                     // Launch the CUDA kernel to perform matrix addition
+    endTimer(timer, "matrix addition (GPU)", printDebugMessages);
 
-    // Launch the CUDA kernel to perform matrix multiplication
-    cudaDeviceSynchronize();
-    MMV1Sequential << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);
-    cudaDeviceSynchronize();
-
-    // Stop the matrix multiplication timer
-    endTimer(timer, "matrix multiplication (GPU)");
-
-    // Start the data transfer timer (GPU -> CPU / Device -> Host)
-    beginTimer(timer);
-
-    // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
-
-    // Stop the data transfer timer (GPU -> CPU / Device -> Host)
-    endTimer(timer, "data transfer (GPU -> CPU)");
+    // Time transfer from device to host
+    beginTimer(timer);                                                                                                      // Start the data transfer timer (GPU -> CPU / Device -> Host)
+    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);                                // Copy the result matrix from device to host
+    endTimer(timer, "data transfer (GPU -> CPU)", printDebugMessages);                                                      // Stop the data transfer timer (GPU -> CPU / Device -> Host)
 
     // Open a new file to write the result into
-    FILE* outputFile = fopen("resultFloats.txt", "w");
+    char fileName[100];                                                                                                     // Max length filename (Just needs to be long enough)
+    sprintf(fileName, "Test/Multiplication_%s_Floats_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols);           // Customize filename to reflect size of result matrix
+    FILE* outputFile = fopen(fileName, "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;

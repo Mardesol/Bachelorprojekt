@@ -1,73 +1,6 @@
-#include "cuda_runtime.h"
-#include "cuda_runtime_api.h"
-#include "device_launch_parameters.h"
+#include "additionDoublesKernels.cu"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "..\..\Timer\timer.cu" 
-#include "..\..\Matrix\matrixDoubles.cu"
-
-const int rows = 200;
-const int cols = 200;
-
-const int M1Rows = rows;
-const int M2Rows = rows;
-const int M3Rows = rows;
-
-const int M3Cols = cols;
-const int M1Cols = cols;
-const int M2Cols = cols;
-
-// CUDA kernel to add two matrices sequentially
-__global__ void matrixAdditionSequential(double* M1, double* M2, double* M3) {
-    for (int i = 0; i < M1Rows; i++) {
-        for (int j = 0; j < M1Cols; j++) {
-            M3[M1Rows * i + j] = M1[M1Rows * i + j] + M2[M1Rows * i + j];
-        }
-    }
-}
-
-// CUDA kernel to add two matrices in parallel, utilizing thread-level parallelism
-__global__ void matrixAdditionParallelV1(double* M1, double* M2, double* M3) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (index < M3Rows * M3Cols) {
-        M3[index] = M1[index] + M2[index];
-    }
-}
-
-// CUDA kernel to add two matrices in parallel, utilizing both thread and block-level parallelism
-__global__ void matrixAdditionParallelV2(double* M1, double* M2, double* M3) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (row < M3Rows && col < M3Cols) {
-        int index = row * M3Rows + col;
-        M3[index] = M1[index] + M2[index];
-    }
-}
-
-// CUDA kernel to add two matrices in parallel, utilizing both thread and block-level parallelism, as well as shared memory
-__global__ void matrixAdditionSharedMemory(double* M1, double* M2, double* M3) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    __shared__ double sharedMemory1[16];
-    __shared__ double sharedMemory2[16];
-
-    int index = row * M3Rows + col;
-
-    // Load data into shared memory
-    sharedMemory1[threadIdx.x] = M1[index];
-    sharedMemory2[threadIdx.x] = M2[index];
-
-    __syncthreads();  // Ensure all threads have loaded data
-
-    if (row < M3Rows && col < M3Cols) {
-        M3[index] = sharedMemory1[threadIdx.x] + sharedMemory2[threadIdx.x];
-    }
-}
+const bool printDebugMessages = false;
 
 int main() {
     // Timer measure time spent on a process
@@ -76,27 +9,22 @@ int main() {
     // Start the setup timer
     beginTimer(timer);
 
-    // Define variables
-    MatrixD M1;
-    MatrixD M2;
-    MatrixD M3;
-
     // Create the matrix objects
-    M1 = createMatrixD(M1Rows, M1Cols);  
-    M2 = createMatrixD(M2Rows, M2Cols);
-    M3 = createMatrixD(M3Rows, M3Cols);
+    MatrixD M1 = createMatrixDoubles(M1Rows, M1Cols);
+    MatrixD M2 = createMatrixDoubles(M2Rows, M2Cols);
+    MatrixD M3 = createMatrixDoubles(M3Rows, M3Cols);
 
     // Populate the matrices
-    populateWithOnesD(M1);
-    populateWithOnesD(M2); 
+    populateWithRandomDoubles(M1);
+    populateWithRandomDoubles(M2);
 
     // Stop the setup timer
-    endTimer(timer, "setup");
+    endTimer(timer, "setup", printDebugMessages);
 
     // Start the data transfer timer (CPU -> GPU / Host -> Device)
     beginTimer(timer);
 
-    // Create the matrix objects to be stored on the device
+    // Declare the matrix objects to be stored on the device
     double* device_M1, * device_M2, * device_M3;  
 
     // Allocate memory for matrices on the GPU
@@ -109,32 +37,28 @@ int main() {
     cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(double), cudaMemcpyHostToDevice);  
 
     // Stop the data transfer timer (CPU -> GPU / Host -> Device)
-    endTimer(timer, "data transfer (CPU -> GPU)");
+    endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
 
     // Define block and grid dimensions for CUDA kernel
     dim3 blockDim(32, 32);
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-    // Start the matrix addition timer
+    // Time the matrix addition
+    const char* kernelName;
+    kernelName = "SharedMemory";                                                                                    // Should reflect the chosen kernel, to name output file accordingly
     beginTimer(timer);
-
-    // Launch the CUDA kernel to perform matrix addition
-    matrixAdditionSharedMemory <<<gridDim, blockDim >>> (device_M1, device_M2, device_M3);
-
-    // Stop the matrix addition timer
-    endTimer(timer, "matrix addition (GPU)");
-
-    // Start the data transfer timer (GPU -> CPU / Device -> Host)
-    beginTimer(timer);
-
-    // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(double), cudaMemcpyDeviceToHost);  
-
-    // Stop the data transfer timer (GPU -> CPU / Device -> Host)
-    endTimer(timer, "data transfer (GPU -> CPU)");
+    SharedMemory << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);                                      // Launch the CUDA kernel to perform matrix addition
+    endTimer(timer, "matrix addition (GPU)", printDebugMessages);
+    
+    // Time transfer from device to host
+    beginTimer(timer);                                                                                              // Start the data transfer timer (GPU -> CPU / Device -> Host)
+    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(double), cudaMemcpyDeviceToHost);                       // Copy the result matrix from device to host
+    endTimer(timer, "data transfer (GPU -> CPU)", printDebugMessages);                                              // Stop the data transfer timer (GPU -> CPU / Device -> Host)
 
     // Open a new file to write the result into
-    FILE* outputFile = fopen("resultDoubles.txt", "w");
+    char fileName[100];                                                                                             // Max length filename (Just needs to be long enough)
+    sprintf(fileName, "Test/Addition_%s_Doubles_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols);        // Customize filename to reflect size of result matrix
+    FILE* outputFile = fopen(fileName, "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;
@@ -143,7 +67,7 @@ int main() {
     // Write host_M3 to the result file
     for (int i = 0; i < M3Rows; i++) {
         for (int j = 0; j < M3Cols; j++) {
-            fprintf(outputFile, "%lf ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+            fprintf(outputFile, "%lf ", M3.data[i * M3Rows + j]);
         }
         fprintf(outputFile, "\n");
     }

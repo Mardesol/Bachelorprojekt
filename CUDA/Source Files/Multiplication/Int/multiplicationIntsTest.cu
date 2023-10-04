@@ -1,78 +1,6 @@
-#include "cuda_runtime.h"
-#include "cuda_runtime_api.h"
-#include "device_launch_parameters.h"
+#include "multiplicationIntsKernels.cu"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "..\..\Matrix\matrixInts.cu"
-#include "..\..\Timer\timer.cu"
-
-const int M1Rows = 100;
-const int M1Cols = 100;
-const int M2Rows = 100;
-const int M2Cols = 100;
-const int M3Rows = M1Rows;
-const int M3Cols = M2Cols;
-
-__global__ void MMV1Sequential(int* M1, int* M2, int* M3) {
-
-	for (int i = 0; i < M1Rows; i++) {
-		for (int j = 0; j < M2Cols; j++) {
-			int sum = 0;
-			for (int k = 0; k < M1Cols; k++) {
-				sum += M1[i * M1Cols + k] *
-					M2[k * M2Cols + j];
-			}
-			M3[i * M2Cols + j] = sum;
-		}
-	}
-}
-
-__global__ void MMV2Parallelism(int* M1, int* M2, int* M3) {
-	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (row < M1Rows && col < M2Cols) {
-		int sum = 0;
-
-		for (int i = 0; i < M1Cols; i++) {
-			sum += M1[row * M1Cols + i] *
-				M2[i * M2Cols + col];
-		}
-		M3[row * M2Cols + col] = sum;
-	}
-}
-
-__global__ void MMV3SharedMemoryAndTiling(int* M1, int* M2, int* M3) {
-	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-	// Allocate shared memory
-	__shared__ int sharedMemory1[16];
-	__shared__ int sharedMemory2[16];
-
-	int sum = 0;
-
-	// Read into shared memory in a coalescing manner
-	for (int i = 0; i < M1Cols; i += blockDim.x) {
-		sharedMemory1[threadIdx.x] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0;
-		sharedMemory2[threadIdx.y] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0;
-
-		__syncthreads();
-
-		// Perform the multiplication
-		for (int j = 0; j < blockDim.x; j++) {
-			sum += sharedMemory1[j] * sharedMemory2[j];
-		}
-
-		__syncthreads();
-	}
-
-	if (row < M1Rows && col < M2Cols) {
-		M3[row * M2Cols + col] = sum;
-	}
-}
+const bool printDebugMessages = false;
 
 // Function to measure kernel execution time
 float measureKernelExecutionTime(
@@ -104,7 +32,6 @@ void measureExecutionTimes(
 	}
 }
 
-
 int main() {
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
@@ -112,22 +39,17 @@ int main() {
 	// Start the setup timer
 	beginTimer(timer);
 
-	// Define variables
-	MatrixI M1;
-	MatrixI M2;
-	MatrixI M3;
-
 	// Create the matrix objects
-	M1 = createMatrixI(M1Rows, M1Cols);
-	M2 = createMatrixI(M2Rows, M2Cols);
-	M3 = createMatrixI(M3Rows, M3Cols);
+	MatrixI M1 = createMatrixI(M1Rows, M1Cols);
+	MatrixI M2 = createMatrixI(M2Rows, M2Cols);
+	MatrixI M3 = createMatrixI(M3Rows, M3Cols);
 
 	// Populate the matrices
-	populateWithOnesI(M1);
-	populateWithOnesI(M2);
+	populateWithRandomInts(M1);
+	populateWithRandomInts(M2);
 
 	// Stop the setup timer
-	endTimer(timer, "setup");
+	endTimer(timer, "setup", printDebugMessages);
 
 	// Start the data transfer timer (CPU -> GPU / Host -> Device)
 	beginTimer(timer);
@@ -145,7 +67,7 @@ int main() {
 	cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(int), cudaMemcpyHostToDevice);
 
 	// Stop the data transfer timer (CPU -> GPU / Host -> Device)
-	endTimer(timer, "data transfer (CPU -> GPU)");
+	endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
 	dim3 blockDim(16, 16);
@@ -160,9 +82,9 @@ int main() {
 	float executionTimes[3][100]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureExecutionTimes(executionTimes[0], MMV1Sequential,			device_M1, device_M2, device_M3, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[1], MMV2Parallelism,			device_M1, device_M2, device_M3, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[2], MMV3SharedMemoryAndTiling, device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[0], Sequential,			device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[1], Parallel,				device_M1, device_M2, device_M3, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling, device_M1, device_M2, device_M3, gridDim, blockDim);
 	
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
@@ -172,17 +94,19 @@ int main() {
 	cudaFree(device_M2);
 	cudaFree(device_M3);
 
-	// Open the output file for writing in append mode
-	FILE* outputFile = fopen("Test/Ints-ExecutionTimes.csv", "a");
+	// Open a new file to write the result into
+	char fileName[100];																											// Max length filename (Just needs to be long enough)
+	sprintf(fileName, "Test/Multiplication_Ints_Execution_Times_Size_%dx%d.csv", M3Rows, M3Cols);								// Customize filename to reflect size of result matrix
+	FILE* outputFile = fopen(fileName, "w");
 	if (outputFile == NULL) {
-		perror("Unable to open the output file");
+		perror("Unable to create the output file");
 		return 1;
 	}
 
 	// Write execution times to the output file in separate columns
 	fprintf(outputFile, "Sequential,Parallel,SharedMemoryAndTilling\n");
 	for (int i = 0; i < 100; i++) {
-		fprintf(outputFile, "%f,%f,%f\n",
+		fprintf(outputFile, "%d,%d,%d\n",
 			executionTimes[0][i],
 			executionTimes[1][i],
 			executionTimes[2][i]);
@@ -194,4 +118,3 @@ int main() {
 	// Exit program
 	return 0;
 }
-

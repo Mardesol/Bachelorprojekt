@@ -6,7 +6,7 @@
 #include <curand_kernel.h>
 
 // Create a matrix on the host
-MatrixF createMatrixF(int rows, int cols) {
+MatrixF createMatrixFloats(int rows, int cols) {
     MatrixF matrix;
     matrix.rows = rows;
     matrix.cols = cols;
