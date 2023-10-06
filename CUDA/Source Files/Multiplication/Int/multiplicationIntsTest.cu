@@ -40,9 +40,9 @@ int main() {
 	beginTimer(timer);
 
 	// Create the matrix objects
-	MatrixI M1 = createMatrixI(M1Rows, M1Cols);
-	MatrixI M2 = createMatrixI(M2Rows, M2Cols);
-	MatrixI M3 = createMatrixI(M3Rows, M3Cols);
+	MatrixI M1 = createMatrixInts(M1Rows, M1Cols);
+	MatrixI M2 = createMatrixInts(M2Rows, M2Cols);
+	MatrixI M3 = createMatrixInts(M3Rows, M3Cols);
 
 	// Populate the matrices
 	populateWithRandomInts(M1);
@@ -106,7 +106,7 @@ int main() {
 	// Write execution times to the output file in separate columns
 	fprintf(outputFile, "Sequential,Parallel,SharedMemoryAndTilling\n");
 	for (int i = 0; i < 100; i++) {
-		fprintf(outputFile, "%d,%d,%d\n",
+		fprintf(outputFile, "%f,%f,%f\n",
 			executionTimes[0][i],
 			executionTimes[1][i],
 			executionTimes[2][i]);

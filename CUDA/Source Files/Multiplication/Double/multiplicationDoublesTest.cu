@@ -40,9 +40,9 @@ int main() {
 	beginTimer(timer);
 
 	// Create the matrix objects
-	MatrixD M1 = createMatrixD(M1Rows, M1Cols);
-	MatrixD M2 = createMatrixD(M2Rows, M2Cols);
-	MatrixD M3 = createMatrixD(M3Rows, M3Cols);
+	MatrixD M1 = createMatrixDoubles(M1Rows, M1Cols);
+	MatrixD M2 = createMatrixDoubles(M2Rows, M2Cols);
+	MatrixD M3 = createMatrixDoubles(M3Rows, M3Cols);
 
 	// Populate the matrices
 	populateWithRandomDoubles(M1);

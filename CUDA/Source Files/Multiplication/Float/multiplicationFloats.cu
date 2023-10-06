@@ -10,9 +10,9 @@ int main() {
     beginTimer(timer);
 
     // Create the matrix objects
-    MatrixF M1 = createMatrixF(M1Rows, M1Cols);
-    MatrixF M2 = createMatrixF(M2Rows, M2Cols);
-    MatrixF M3 = createMatrixF(M3Rows, M3Cols);
+    MatrixF M1 = createMatrixFloats(M1Rows, M1Cols);
+    MatrixF M2 = createMatrixFloats(M2Rows, M2Cols);
+    MatrixF M3 = createMatrixFloats(M3Rows, M3Cols);
 
     // Populate the matrices
     populateWithRandomFloats(M1);
