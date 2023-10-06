@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <time.h>
 
-#include "../Matrix/matrix.c"
-#include "../Timer/timer.c"
+#include "../../Matrix/Int/matrixInts.c"
+#include "../../Timer/timer.c"
 
-void multiplicationSimple(Matrix M1, Matrix M2, Matrix M3)
+#define MATRIX_SIZE 200
+
+void multiplicationSequential(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 {
     for(int i = 0; i < M1.rows; i++) {
         for(int j = 0; j < M2.cols; j++) {
@@ -21,7 +22,7 @@ void multiplicationSimple(Matrix M1, Matrix M2, Matrix M3)
     }
 }
 
-void multiplicationV2(Matrix M1, Matrix M2, Matrix M3)
+void multiplicationV2(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 {
     for(int i = 0; i < M1.rows; i++) {
             int pos1 = i * M1.cols;
@@ -45,61 +46,44 @@ int main()
 {
     // Start measuring time OS spends on process
     Timer timer = createTimer();
-    beginTimer(&timer);
 
-    Matrix M1;
-    Matrix M2;
-    Matrix M3;
-
-    M1 = createMatrix(500, 500);
-    M2 = createMatrix(500, 500);
-    M3 = createMatrix(500, 500);
+    // Initialize matrices
+    MatrixInts M1 = createMatrixInts(MATRIX_SIZE, MATRIX_SIZE);
+    MatrixInts M2 = createMatrixInts(MATRIX_SIZE, MATRIX_SIZE);
+    MatrixInts M3 = createMatrixInts(MATRIX_SIZE, MATRIX_SIZE);
 
     // Read data into M1 and M2
     populateWithRandomInts(M1);
     populateWithRandomInts(M2);
 
-    // End measuring time OS spends on process
-    endTimer(&timer, "setup", 5);
+    double executionTimes[100];                         // Array to store execution times for 100 iterations
 
-    // Start measuring time OS spends on process
-    beginTimer(&timer);
-
-    // Perform multiplication
-    multiplicationSimple(M1, M2, M3);
-
-    // End measuring time OS spends on process
-    endTimer(&timer, "multiplication", 8);
-
-    // Start measuring time OS spends on process
-    beginTimer(&timer);
+    for (int i = 0; i < 100; i++) {
+        beginTimer(&timer);                             // Start measuring time for this iteration
+        multiplicationSequential(M1, M2, M3);                 // Perform addition
+        executionTimes[i] = endTimerDouble(&timer);     // End measuring time for this iteration
+    }
 
     // Open a new file to write result into
-    FILE *outputFile = fopen("result.txt", "w");
+    char filename[100];
+    snprintf(filename, 100, "Test/Addition_Ints_Runtime_Matrix_Size_%d.csv", MATRIX_SIZE);
+
+    FILE *outputFile = fopen(filename, "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
         return 1;
-    }
-
-    // Write M3 to the result file
-    for(int i = 0; i < M3.rows; i++) {
-        for(int j = 0; j < M3.cols; j++) {
-            fprintf(outputFile, "%d ", M3.data[i * M3.cols + j]);
+    } else {
+        for(int i = 0; i < 100; i++) {
+            fprintf(outputFile, "%f\n", executionTimes[i]);
         }
-        fprintf(outputFile, "\n");
     }
 
-
-    // Close result file
-    fclose(outputFile);
-
+    // Deallocate memory
     free(M1.data);
     free(M2.data);
     free(M3.data);
 
-    // End measuring time OS spends on process
-    endTimer(&timer, "shutdown", 8);
-
-    // End program
+    // Close result file and end program
+    fclose(outputFile);
     return 0;
 }
