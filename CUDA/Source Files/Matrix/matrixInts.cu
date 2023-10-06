@@ -42,3 +42,15 @@ void populateWithRandomInts(MatrixI matrix) {
         }
     }
 }
+
+// Comparison for int data type
+bool compareMatricesInt(int* M1, int* M2, int MRows, int MCols) {
+    for (int i = 0; i < MRows; i++) {
+        for (int j = 0; j < MCols; j++) {
+            if (M1[i * MCols + j] != M2[i * MCols + j]) {
+                return false;  // Matrices do not match
+            }
+        }
+    }
+    return true;  // Matrices match
+}

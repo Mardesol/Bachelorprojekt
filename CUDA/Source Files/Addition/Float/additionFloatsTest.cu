@@ -1,4 +1,5 @@
 #include "additionFloatsKernels.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
 
@@ -33,6 +34,10 @@ void measureExecutionTimes(
 }
 
 int main() {
+    if (!additionCheck(M1Rows, M1Cols, M2Rows, M2Cols)) {
+        perror("Matrices must have the same size");
+        return 1;
+    }
     // Timer measure time spent on a process
     Timer timer = createTimer();
 

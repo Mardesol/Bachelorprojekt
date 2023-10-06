@@ -1,4 +1,5 @@
 #include "multiplicationFloatsKernels.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
 
@@ -33,6 +34,11 @@ void measureExecutionTimes(
 }
 
 int main() {
+	if (!multiplicationCheck(M1Cols, M2Rows)) {
+		perror("Matrices must be compatible");
+		return 1;
+	}
+
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 

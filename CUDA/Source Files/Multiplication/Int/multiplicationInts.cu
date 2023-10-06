@@ -1,8 +1,15 @@
 #include "multiplicationIntsKernels.cu"
+#include "..\..\Matrix\matrixOperationsCPU.cu"
+#include "..\..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
 
 int main(int argc, char* argv[]) {
+	if (!multiplicationCheck(M1Cols, M2Rows)) {
+		perror("Matrices must be compatible");
+		return 1;
+	}
+
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 
@@ -107,7 +114,53 @@ int main(int argc, char* argv[]) {
 	cudaFree(device_M2);
 	cudaFree(device_M3);
 
+	//Setup a CPU comparison matrix
+	MatrixI MCPU = createMatrixI(M3Rows, M3Cols);
+	additionInt(M1.data, M2.data, MCPU.data, M3Rows, M3Cols);
+
+	//Validate result by comparing to CPU calculations
+	bool valid = compareMatricesInt(MCPU.data, M3.data, M3Rows, M3Cols);
+	if (valid) {
+		printf("Matrix multiplication results match!\n");
+	}
+	else {
+		printf("Matrix multiplication results do not match.\n");
+		// Write the matrices to text files for analysis
+		FILE* outputFile1 = fopen("resultIntsCPU.txt", "w");
+		if (outputFile1 == NULL) {
+			perror("Unable to create the output file");
+			return 1;
+		}
+
+		// Write host_M3 to the result file
+		for (int i = 0; i < M3Rows; i++) {
+			for (int j = 0; j < M3Cols; j++) {
+				fprintf(outputFile1, "%d ", MCPU.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+			}
+			fprintf(outputFile1, "\n");
+		}
+
+		// Close the result file
+		fclose(outputFile1);
+
+		FILE* outputFile2 = fopen("resultIntsGPU.txt", "w");
+		if (outputFile2 == NULL) {
+			perror("Unable to create the output file");
+			return 1;
+		}
+
+		// Write host_M3 to the result file
+		for (int i = 0; i < M3Rows; i++) {
+			for (int j = 0; j < M3Cols; j++) {
+				fprintf(outputFile2, "%d ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
+			}
+			fprintf(outputFile2, "\n");
+		}
+
+		// Close the result file
+		fclose(outputFile2);
+	}
+
 	// Exit program
 	return 0;
 }
-

@@ -12,4 +12,6 @@ MatrixD createMatrixD(int rows, int cols);
 void populateWithOnesD(MatrixD matrix);
 void populateWithRandomDoubles(MatrixD matrix);
 
+bool compareMatricesDouble(double* M1, double* M2, int MRows, int MCols);
+
 #endif

@@ -12,4 +12,5 @@ MatrixF createMatrixF(int rows, int cols);
 void populateWithOnesF(MatrixF matrix);
 void populateWithRandomFloats(MatrixF matrix);
 
+bool compareMatricesFloat(float* M1, float* M2, int MRows, int MCols);
 #endif
