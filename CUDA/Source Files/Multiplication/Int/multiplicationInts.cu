@@ -2,7 +2,7 @@
 
 const bool printDebugMessages = false;
 
-int main() {
+int main(int argc, char* argv[]) {
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 
@@ -49,12 +49,33 @@ int main() {
 
 	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
 
-	// Time the matrix multiplication
+	// Convert the command line argument to an integer
+	int choice = atoi(argv[1]);
+
 	const char* kernelName;
-	kernelName = "SharedMemoryAndTiling";                                                                                   // Should reflect the chosen kernel, to name output file accordingly
-	beginTimer(timer);
-	SharedMemoryAndTiling << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);                                     // Launch the CUDA kernel to perform matrix addition
-	endTimer(timer, "matrix multiplication (GPU)", printDebugMessages);
+
+	if (choice == 1) {
+		// Time the matrix multiplication	
+		kernelName = "Sequential";                                                                                  // Should reflect the chosen kernel, to name output file accordingly
+		beginTimer(timer);
+		Sequential << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);									// Launch the CUDA kernel to perform matrix addition
+		endTimer(timer, "matrix multiplication (GPU)", printDebugMessages);
+	}
+	else if (choice == 2) {
+		// Time the matrix multiplication
+		kernelName = "Parallel";                                                                                   // Should reflect the chosen kernel, to name output file accordingly
+		beginTimer(timer);
+		Parallel << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);                                     // Launch the CUDA kernel to perform matrix addition
+		endTimer(timer, "matrix multiplication (GPU)", printDebugMessages);
+	}
+	else if (choice == 3) {
+		// Time the matrix multiplication
+		kernelName = "SharedMemoryAndTiling";                                                                       // Should reflect the chosen kernel, to name output file accordingly
+		beginTimer(timer);
+		SharedMemoryAndTiling << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);                         // Launch the CUDA kernel to perform matrix addition
+		endTimer(timer, "matrix multiplication (GPU)", printDebugMessages);
+	}
+	
 
     // Time transfer from device to host
     beginTimer(timer);                                                                                                      // Start the data transfer timer (GPU -> CPU / Device -> Host)

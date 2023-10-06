@@ -46,21 +46,24 @@ __global__ void SharedMemoryAndTiling(int* M1, int* M2, int* M3) {
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 
 	// Allocate shared memory
-	__shared__ int sharedMemory1[16];
-	__shared__ int sharedMemory2[16];
+	__shared__ int sharedMemory1[32 * 32];
+	__shared__ int sharedMemory2[32 * 32];
+
+	int sharedIndex1 = threadIdx.y * blockDim.x + threadIdx.x;
+	int sharedIndex2 = threadIdx.x * blockDim.y + threadIdx.y;
 
 	int sum = 0;
 
 	// Read into shared memory in a coalescing manner
 	for (int i = 0; i < M1Cols; i += blockDim.x) {
-		sharedMemory1[threadIdx.x] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0;
-		sharedMemory2[threadIdx.y] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0;
+		sharedMemory1[sharedIndex1] = (row < M1Rows && i + threadIdx.x < M1Cols) ? M1[row * M1Cols + i + threadIdx.x] : 0;
+		sharedMemory2[sharedIndex2] = (i + threadIdx.y < M1Cols && col < M2Cols) ? M2[(i + threadIdx.y) * M2Cols + col] : 0;
 
 		__syncthreads();
 
 		// Perform the multiplication
-		for (int j = 0; j < blockDim.x; j++) {
-			sum += sharedMemory1[j] * sharedMemory2[j];
+		for (int j = 0; j < blockDim.x; j++) {	
+			sum += sharedMemory1[threadIdx.y * blockDim.x + j] * sharedMemory2[j * blockDim.y + threadIdx.x];
 		}
 
 		__syncthreads();
