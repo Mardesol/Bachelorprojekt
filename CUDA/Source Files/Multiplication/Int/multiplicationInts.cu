@@ -3,9 +3,14 @@
 #include "..\..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
+const int TILE_WIDTH = 16;
+
+inline int min_val(int a, int b) {
+	return (a < b) ? a : b;
+}
 
 int main(int argc, char* argv[]) {
-	if (!multiplicationCheck(M1Cols, M2Rows)) {
+	if (!isCompatibleForMultiplication(M1Cols, M2Rows)) {
 		perror("Matrices must be compatible");
 		return 1;
 	}
@@ -13,44 +18,18 @@ int main(int argc, char* argv[]) {
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 
-	// Start the setup timer
-	beginTimer(timer);
-
-	// Create the matrix objects
-	MatrixI M1 = createMatrixInts(M1Rows, M1Cols);
-	MatrixI M2 = createMatrixInts(M2Rows, M2Cols);
-	MatrixI M3 = createMatrixInts(M3Rows, M3Cols);
-
-	// Populate the matrices
-	populateWithRandomInts(M1);
-	populateWithRandomInts(M2);
-
-	// Stop the setup timer
-	endTimer(timer, "setup", printDebugMessages);
-
-	// Start the data transfer timer (CPU -> GPU / Host -> Device)
-	beginTimer(timer);
-
-	// Create the matrix objects to be stored on the device
-	int* device_M1, * device_M2, * device_M3;
-
-	// Allocate memory for matrices on the GPU
-	cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(int));
-	cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(int));
-	cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(int));
-
-	// Copy data from host to device
-	// The data is matrix 1 and 2
-	cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(int), cudaMemcpyHostToDevice);
-	cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(int), cudaMemcpyHostToDevice);
-
-	// Stop the data transfer timer (CPU -> GPU / Host -> Device)
-	endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
+    beginTimer(timer);              
+    MatrixI M1, M2, M3;
+    int* device_M1, * device_M2, * device_M3;
+    initializeMatricesAndMemory(M1, M2, M3);
+    allocateMemoryOnGPU(device_M1, device_M2, device_M3);
+    copyMatricesToGPU(M1, M2, device_M1, device_M2);
+    endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
-	dim3 blockDim(16, 16);
+	dim3 blockDim(TILE_WIDTH, TILE_WIDTH);
 
-	if (M3Rows <= 16 && M3Cols <= 16) {
+	if (M3Rows <= TILE_WIDTH && M3Cols <= TILE_WIDTH) {
 		blockDim = dim3(M3Cols, M3Rows);  // Use matrix size for smaller matrices
 	}
 
@@ -79,87 +58,39 @@ int main(int argc, char* argv[]) {
 		// Time the matrix multiplication
 		kernelName = "SharedMemoryAndTiling";                                                                       // Should reflect the chosen kernel, to name output file accordingly
 		beginTimer(timer);
+		cudaDeviceSynchronize();
 		SharedMemoryAndTiling << <gridDim, blockDim >> > (device_M1, device_M2, device_M3);                         // Launch the CUDA kernel to perform matrix addition
+		cudaDeviceSynchronize();
 		endTimer(timer, "matrix multiplication (GPU)", printDebugMessages);
 	}
 	
-
-    // Time transfer from device to host
-    beginTimer(timer);                                                                                                      // Start the data transfer timer (GPU -> CPU / Device -> Host)
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);									// Copy the result matrix from device to host
-    endTimer(timer, "data transfer (GPU -> CPU)", printDebugMessages);                                                      // Stop the data transfer timer (GPU -> CPU / Device -> Host)
+	// Copy the result matrix from device to host
+    cudaMemcpy(M3.data, device_M3, memorySize3, cudaMemcpyDeviceToHost);
 
 	// Open a new file to write the result into
 	char fileName[100];                                                                                                     // Max length filename (Just needs to be long enough)
 	sprintf(fileName, "Test/Multiplication_%s_Ints_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols);				// Customize filename to reflect size of result matrix
-	FILE* outputFile = fopen(fileName, "w");
-	if (outputFile == NULL) {
-		perror("Unable to create the output file");
-		return 1;
-	}
-
-	// Write host_M3 to the result file
-	for (int i = 0; i < M3Rows; i++) {
-		for (int j = 0; j < M3Cols; j++) {
-			fprintf(outputFile, "%d ", M3.data[i * M3Rows + j]);
-		}
-		fprintf(outputFile, "\n");
-	}
-
-	// Close the result file
-	fclose(outputFile);
-
-	// Deallocate memory on the GPU and CPU
-	cudaFree(device_M1);
-	cudaFree(device_M2);
-	cudaFree(device_M3);
+	printMatrixToFileInts(fileName, M3);
 
 	//Setup a CPU comparison matrix
-	MatrixI MCPU = createMatrixI(M3Rows, M3Cols);
-	additionInt(M1.data, M2.data, MCPU.data, M3Rows, M3Cols);
+	MatrixI MCPU = createMatrixInts(M3Rows, M3Cols);
+	multiplicationInts(M1, M2, MCPU);
 
 	//Validate result by comparing to CPU calculations
-	bool valid = compareMatricesInt(MCPU.data, M3.data, M3Rows, M3Cols);
+	bool valid = compareMatricesInts(MCPU, M3);
 	if (valid) {
 		printf("Matrix multiplication results match!\n");
 	}
 	else {
 		printf("Matrix multiplication results do not match.\n");
-		// Write the matrices to text files for analysis
-		FILE* outputFile1 = fopen("resultIntsCPU.txt", "w");
-		if (outputFile1 == NULL) {
-			perror("Unable to create the output file");
-			return 1;
-		}
+		// Write the CPU matrix to text file for analysis
+		char fileNameCPU[100];
+		sprintf(fileNameCPU, "resultsIntsCPU.txt");
 
-		// Write host_M3 to the result file
-		for (int i = 0; i < M3Rows; i++) {
-			for (int j = 0; j < M3Cols; j++) {
-				fprintf(outputFile1, "%d ", MCPU.data[i * M3Rows + j]);  // Change format specifier to %lf for double
-			}
-			fprintf(outputFile1, "\n");
-		}
-
-		// Close the result file
-		fclose(outputFile1);
-
-		FILE* outputFile2 = fopen("resultIntsGPU.txt", "w");
-		if (outputFile2 == NULL) {
-			perror("Unable to create the output file");
-			return 1;
-		}
-
-		// Write host_M3 to the result file
-		for (int i = 0; i < M3Rows; i++) {
-			for (int j = 0; j < M3Cols; j++) {
-				fprintf(outputFile2, "%d ", M3.data[i * M3Rows + j]);  // Change format specifier to %lf for double
-			}
-			fprintf(outputFile2, "\n");
-		}
-
-		// Close the result file
-		fclose(outputFile2);
+		printMatrixToFileInts(fileNameCPU, MCPU);
 	}
+
+	freeMemory(device_M1, device_M2, device_M3, M1, M2, M3);
 
 	// Exit program
 	return 0;

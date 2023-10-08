@@ -8,17 +8,6 @@
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixFloats.cu"
 
-const int rows = 200;
-const int cols = 200;
-
-const int M1Rows = rows;
-const int M2Rows = rows;
-const int M3Rows = rows;
-
-const int M3Cols = cols;
-const int M1Cols = cols;
-const int M2Cols = cols;
-
 // CUDA kernel to add two matrices sequentially
 __global__ void Sequential(float* M1, float* M2, float* M3) {
     for (int i = 0; i < M1Rows; i++) {
@@ -58,7 +47,7 @@ __global__ void SharedMemory(float* M1, float* M2, float* M3) {
 
     __syncthreads();  // Ensure all threads have loaded data
 
-    if (row < M3Rows && col < M3Cols) {
-        M3[index] = sharedMemory1[threadIdx.x] + sharedMemory2[threadIdx.x];
+    if (index < M3Rows * M3Cols) {
+        M3[index] = sharedMemory1[sharedIndex] + sharedMemory2[sharedIndex];
     }
 }

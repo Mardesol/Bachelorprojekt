@@ -1,4 +1,4 @@
-#include "additionIntKernels.cu"
+#include "additionIntsKernels.cu"
 #include "..\..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
@@ -34,52 +34,26 @@ void measureExecutionTimes(
 }
 
 int main() {
-    if (!additionCheck(M1Rows, M1Cols, M2Rows, M2Cols)) {
+    if (!isCompatibleForAddition(M1Rows, M1Cols, M2Rows, M2Cols)) {
         perror("Matrices must have the same size");
         return 1;
     }
-
     // Timer measure time spent on a process
     Timer timer = createTimer();
 
-    // Start the setup timer
-    beginTimer(timer);
-
-    // Create the matrix objects
-    MatrixI M1 = createMatrixInts(M1Rows, M1Cols);
-    MatrixI M2 = createMatrixInts(M2Rows, M2Cols);
-    MatrixI M3 = createMatrixInts(M3Rows, M3Cols);
-
-    // Populate the matrices
-    populateWithRandomInts(M1);
-    populateWithRandomInts(M2);
-
-    // Stop the setup timer
-    endTimer(timer, "setup", printDebugMessages);
-
-    // Start the data transfer timer (CPU -> GPU / Host -> Device)
-    beginTimer(timer);
-
-    // Allocate memory for matrices on the GPU
+    beginTimer(timer);              
+    MatrixI M1, M2, M3;
     int* device_M1, * device_M2, * device_M3;
-
-    cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(int));
-    cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(int));
-    cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(int));
-
-    // Copy input matrices from host to device
-    cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(int), cudaMemcpyHostToDevice);
-
-    // Stop the data transfer timer (CPU -> GPU / Host -> Device)
-    endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
+    initializeMatricesAndMemory(M1, M2, M3);
+    allocateMemoryOnGPU(device_M1, device_M2, device_M3);
+    copyMatricesToGPU(M1, M2, device_M1, device_M2);
+    endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
     // Define block and grid dimensions for CUDA kernel
     dim3 blockDim(16, 16);
 
-    // Use matrix size for smaller matrices
     if (M3Rows <= 16 && M3Cols <= 16) {
-        blockDim = dim3(M3Cols, M3Rows);    
+        blockDim = dim3(M3Cols, M3Rows);  // Use matrix size for smaller matrices
     }
 
     dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
@@ -93,16 +67,11 @@ int main() {
     measureExecutionTimes(executionTimes[2], SharedMemory,  device_M1, device_M2, device_M3, gridDim, blockDim);
 
     // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(int), cudaMemcpyDeviceToHost);
-
-    // Deallocate memory on the GPU and CPU
-    cudaFree(device_M1);
-    cudaFree(device_M2);
-    cudaFree(device_M3);
+    cudaMemcpy(M3.data, device_M3, memorySize3, cudaMemcpyDeviceToHost);
 
     // Open a new file to write the result into
-    char fileName[100];                                                                                             // Max length filename (Just needs to be long enough)
-    sprintf(fileName, "Test/Int_Execution_Times_Matrix_Size_%dx%d.csv", M3Rows, M3Cols);                            // Customize filename to reflect size of result matrix
+    char fileName[100];                                                                             // Max length filename (Just needs to be long enough)
+    sprintf(fileName, "Test/Int_Execution_Times_Matrix_Size_%dx%d.csv", M3Rows, M3Cols);            // Customize filename to reflect size of result matrix
     FILE* outputFile = fopen(fileName, "w");
     if (outputFile == NULL) {
         perror("Unable to create the output file");
@@ -112,7 +81,7 @@ int main() {
     // Write execution times to the output file in separate columns
     fprintf(outputFile, "Sequential,Parallel,SharedMemory\n");
     for (int i = 0; i < 100; i++) {
-        fprintf(outputFile, "%d,%d,%d\n",
+        fprintf(outputFile, "%f,%f,%f\n",
             executionTimes[0][i],
             executionTimes[1][i],
             executionTimes[2][i]);
@@ -120,6 +89,8 @@ int main() {
 
     // Close the output file
     fclose(outputFile);
+
+    freeMemory(device_M1, device_M2, device_M3, M1, M2, M3);
 
     // Exit program
     return 0;

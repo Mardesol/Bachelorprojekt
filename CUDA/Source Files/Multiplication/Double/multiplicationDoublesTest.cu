@@ -34,7 +34,7 @@ void measureExecutionTimes(
 }
 
 int main() {
-	if (!multiplicationCheck(M1Cols, M2Rows)) {
+	if (!isCompatibleForMultiplication(M1Cols, M2Rows)) {
 		perror("Matrices must be compatible");
 		return 1;
 	}
@@ -42,38 +42,13 @@ int main() {
 	// Timer measure time spent on a process
 	Timer timer = createTimer();
 
-	// Start the setup timer
-	beginTimer(timer);
-
-	// Create the matrix objects
-	MatrixD M1 = createMatrixDoubles(M1Rows, M1Cols);
-	MatrixD M2 = createMatrixDoubles(M2Rows, M2Cols);
-	MatrixD M3 = createMatrixDoubles(M3Rows, M3Cols);
-
-	// Populate the matrices
-	populateWithRandomDoubles(M1);
-	populateWithRandomDoubles(M2);
-
-	// Stop the setup timer
-	endTimer(timer, "setup", printDebugMessages);
-
-	// Start the data transfer timer (CPU -> GPU / Host -> Device)
-	beginTimer(timer);
-
-	// Create the matrix objects to be stored on the device
-	double* device_M1, * device_M2, * device_M3;
-
-	// Allocate memory for matrices on the GPU
-	cudaMalloc((void**)&device_M1, M1Rows * M1Cols * sizeof(double));
-	cudaMalloc((void**)&device_M2, M2Rows * M2Cols * sizeof(double));
-	cudaMalloc((void**)&device_M3, M3Rows * M3Cols * sizeof(double));
-
-	// Copy data from host to device
-	cudaMemcpy(device_M1, M1.data, M1Rows * M1Cols * sizeof(double), cudaMemcpyHostToDevice);
-	cudaMemcpy(device_M2, M2.data, M2Rows * M2Cols * sizeof(double), cudaMemcpyHostToDevice);
-
-	// Stop the data transfer timer (CPU -> GPU / Host -> Device)
-	endTimer(timer, "data transfer (CPU -> GPU)", printDebugMessages);
+    beginTimer(timer);              
+    MatrixD M1, M2, M3;
+    double* device_M1, * device_M2, * device_M3;
+    initializeMatricesAndMemory(M1, M2, M3);
+    allocateMemoryOnGPU(device_M1, device_M2, device_M3);
+    copyMatricesToGPU(M1, M2, device_M1, device_M2);
+    endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
 	dim3 blockDim(16, 16);
@@ -95,11 +70,6 @@ int main() {
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(double), cudaMemcpyDeviceToHost);
 
-	// Deallocate memory on the GPU and CPU
-	cudaFree(device_M1);
-	cudaFree(device_M2);
-	cudaFree(device_M3);
-
 	// Open a new file to write the result into
 	char fileName[100];																											// Max length filename (Just needs to be long enough)
 	sprintf(fileName, "Test/Multiplication_Double_Execution_Times_Size_%dx%d.csv", M3Rows, M3Cols);								// Customize filename to reflect size of result matrix
@@ -120,6 +90,8 @@ int main() {
 
 	// Close the output file
 	fclose(outputFile);
+
+	freeMemory(device_M1, device_M2, device_M3, M1, M2, M3);
 
 	// Exit program
 	return 0;

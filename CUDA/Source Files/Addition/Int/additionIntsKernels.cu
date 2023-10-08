@@ -8,17 +8,6 @@
 #include "..\..\Timer\timer.cu" 
 #include "..\..\Matrix\matrixInts.cu"
 
-const int rows = 200;
-const int cols = 200;
-
-const int M1Rows = rows;
-const int M2Rows = rows;
-const int M3Rows = rows;
-
-const int M3Cols = cols;
-const int M1Cols = cols;
-const int M2Cols = cols;
-
 // CUDA kernel to add two matrices sequentially
 __global__ void Sequential(int* M1, int* M2, int* M3) {
     for (int i = 0; i < M1Rows; i++) {

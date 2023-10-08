@@ -5,6 +5,21 @@
 
 #include <curand_kernel.h>
 
+const int rows = 200;
+const int cols = 200;
+
+const int M1Rows = rows;
+const int M2Rows = rows;
+const int M3Rows = rows;
+
+const int M3Cols = cols;
+const int M1Cols = cols;
+const int M2Cols = cols;
+
+const size_t memorySize1 = M1Rows * M1Cols * sizeof(float);
+const size_t memorySize2 = M2Rows * M2Cols * sizeof(float);
+const size_t memorySize3 = M3Rows * M3Cols * sizeof(float);
+
 // Create a matrix on the host
 MatrixF createMatrixFloats(int rows, int cols) {
     MatrixF matrix;
@@ -37,7 +52,70 @@ void populateWithRandomFloats(MatrixF matrix) {
 
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
-            matrix.data[i * matrix.cols + j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX); // Generate random float between 0 and 1
+            matrix.data[i * matrix.cols + j] = rand() / (float)rand();
         }
     }
+}
+
+void printMatrixToFileFloats(char* fileName, MatrixF M) {
+    FILE* outputFile = fopen(fileName, "w");
+    if (outputFile == NULL) {
+        perror("Unable to create the output file");
+        return;
+    }
+
+    // Print the matrix to the file
+    for (int i = 0; i < M.rows; i++) {
+        for (int j = 0; j < M.cols; j++) {
+            fprintf(outputFile, "%f ", M.data[i * M.cols + j]);
+        }
+        fprintf(outputFile, "\n");
+    }
+    
+    fclose(outputFile); // Close the file after writing
+}
+
+// Comparison for float data type
+bool compareMatricesFloats(MatrixF M1, MatrixF M2) {
+    
+    const float ErrorMargin = (float)1;
+
+    for (int i = 0; i < M1.rows; i++) {
+        for (int j = 0; j < M1.cols; j++) {
+            if (M1.data[i * M1.cols + j] - M2.data[i * M1.cols + j] > ErrorMargin) {
+                return false;   // Matrices do not match
+            }
+        }
+    }
+    return true;                // Matrices match
+}
+
+void initializeMatricesAndMemory(MatrixF& M1, MatrixF& M2, MatrixF& M3) {
+    M1 = createMatrixFloats(M1Rows, M1Cols);
+    M2 = createMatrixFloats(M2Rows, M2Cols);
+    M3 = createMatrixFloats(M3Rows, M3Cols);
+
+    populateWithRandomFloats(M1);
+    populateWithRandomFloats(M2);
+}
+
+void allocateMemoryOnGPU(float*& device_M1, float*& device_M2, float*& device_M3) {
+    cudaMalloc((void**)&device_M1, memorySize1);
+    cudaMalloc((void**)&device_M2, memorySize2);
+    cudaMalloc((void**)&device_M3, memorySize3);
+}
+
+void copyMatricesToGPU(const MatrixF& M1, const MatrixF& M2, float* device_M1, float* device_M2) {
+    cudaMemcpy(device_M1, M1.data, memorySize1, cudaMemcpyHostToDevice);
+    cudaMemcpy(device_M2, M2.data, memorySize2, cudaMemcpyHostToDevice);
+}
+
+void freeMemory(float* device_M1, float* device_M2, float* device_M3, MatrixF& M1, MatrixF& M2, MatrixF& M3) {
+    cudaFree(device_M1);
+    cudaFree(device_M2);
+    cudaFree(device_M3);
+
+    free(M1.data);
+    free(M2.data);
+    free(M3.data);
 }

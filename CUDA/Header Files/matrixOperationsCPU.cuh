@@ -1,16 +1,20 @@
+#include "matrixDoubles.cuh"
+#include "matrixFloats.cuh"
+#include "matrixInts.cuh"
+
 #ifndef MATRIXOPERATIONSCPU_CUH
 #define MATRIXOPERATIONSCPU_CUH
 
-void additionInt(int* M1, int* M2, int* M3, int MRows, int MCols);
-void additionFloat(float* M1, float* M2, float* M3, int MRows, int MCols);
-void additionDouble(double* M1, double* M2, double* M3, int MRows, int MCols);
+void additionInts(MatrixI M1, MatrixI M2, MatrixI M3);
+void additionFloats(MatrixF M1, MatrixF M2, MatrixF M3);
+void additionDoubles(MatrixD M1, MatrixD M2, MatrixD M3);
 
-void multiplicationInt(int* M1, int* M2, int* M3, int M1Rows, int M1Cols, int M2Cols);
-void multiplicationFloat(float* M1, float* M2, float* M3, int M1Rows, int M1Cols, int M2Cols);
-void multiplicationDouble(double* M1, double* M2, double* M3, int M1Rows, int M1Cols, int M2Cols);
+void multiplicationInts(MatrixI M1, MatrixI M2, MatrixI M3);
+void multiplicationFloats(MatrixF M1, MatrixF M2, MatrixF M3);
+void multiplicationDoubles(MatrixD M1, MatrixD M2, MatrixD M3);
 
-bool compareMatricesInt(int* M1, int* M2, int MRows, int MCols);
-bool compareMatricesFloat(float* M1, float* M2, int MRows, int MCols);
-bool compareMatricesDouble(double* M1, double* M2, int MRows, int MCols);
+bool compareMatricesInts(MatrixI M1, MatrixI M2);
+bool compareMatricesFloats(MatrixF M1, MatrixF M2);
+bool compareMatricesDoubles(MatrixD M1, MatrixD M2);
 
 #endif
