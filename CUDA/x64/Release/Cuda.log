@@ -1,1 +1,21 @@
-﻿
+﻿  Compiling CUDA source file Source Files\Multiplication\Float\multiplicationFloatsKernels.cu...
+  
+  C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\include"     --keep-dir x64\Release  -maxrregcount=0   --machine 64 --compile -cudart static    -DNDEBUG -D_CONSOLE -D_UNICODE -DUNICODE -Xcompiler "/EHsc /W3 /nologo /O2 /FS   /MD " -Xcompiler "/Fdx64\Release\vc143.pdb" -o "C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA\x64\Release\multiplicationFloatsKernels.cu.obj" "C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA\Source Files\Multiplication\Float\multiplicationFloatsKernels.cu" 
+C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA\Source Files\Multiplication\Float\multiplicationFloatsKernels.cu(13): warning #177-D: variable "M2Rows" was declared but never referenced
+    const int M2Rows = 100;
+              ^
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA\Source Files\Multiplication\Float\multiplicationFloatsKernels.cu(15): warning #177-D: variable "M3Rows" was declared but never referenced
+    const int M3Rows = M1Rows;
+              ^
+  
+C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA\Source Files\Multiplication\Float\multiplicationFloatsKernels.cu(16): warning #177-D: variable "M3Cols" was declared but never referenced
+    const int M3Cols = M2Cols;
+              ^
+  
+  multiplicationFloatsKernels.cu
+  tmpxft_00003180_00000000-7_multiplicationFloatsKernels.cudafe1.cpp
+MSVCRT.lib(exe_main.obj) : error LNK2001: unresolved external symbol main
+C:\Users\EG\OneDrive - ITU\7. semester\Bachelor\Git\Ny\Bachelorprojekt\CUDA\x64\Release\Cuda.exe : fatal error LNK1120: 1 unresolved externals

@@ -10,6 +10,6 @@ typedef struct Timer {
 
 Timer createTimer();
 void beginTimer(Timer timer);
-void endTimer(Timer timer, const char *message);
+void endTimer(Timer timer, const char *message, bool printDebug);
 
 #endif
