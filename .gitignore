@@ -6,7 +6,6 @@
 *.fatbin
 *.txt
 *.vs
-*.exe
 *.lib
 *.exp
 *.ncu-rep
