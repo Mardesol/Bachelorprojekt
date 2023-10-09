@@ -5,8 +5,8 @@
 #include "../../Matrix/Double/matrixDoubles.c"
 #include "../../Timer/timer.c"
 
-#define MATRIX_SIZES {200, 800, 5000, 10000}
-#define NUM_SIZES 4
+#define MATRIX_SIZES {200, 800, 5000}
+#define NUM_SIZES 3
 
 void additionSequential(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
 {
