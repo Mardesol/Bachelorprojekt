@@ -13,7 +13,7 @@ typedef struct Timer {
 
 Timer createTimer();
 void beginTimer(Timer *timer);
-void endTimer(Timer *timer, char *message, size_t messageLength);
+void endTimer(Timer *timer, char *message);
 double endTimerDouble(Timer *timer);
 
 #endif
