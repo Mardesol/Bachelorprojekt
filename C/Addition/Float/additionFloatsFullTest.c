@@ -5,8 +5,8 @@
 #include "../../Matrix/Float/matrixFloats.c"
 #include "../../Timer/timer.c"
 
-#define MATRIX_SIZES {200, 400, 800, 1600, 3200, 6400}
-#define NUM_SIZES 6
+#define MATRIX_SIZES {200, 800, 5000, 10000}
+#define NUM_SIZES 4
 
 void additionSequential(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
 {

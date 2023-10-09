@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../../Matrix/Int/matrixInts.c"
+#include "../../Matrix/Double/matrixDoubles.c"
 #include "../../Timer/timer.c"
 
 #define MATRIX_SIZES {200, 800, 5000, 10000}
 #define NUM_SIZES 4
 
-void additionSequential(MatrixInts M1, MatrixInts M2, MatrixInts M3)
+void additionSequential(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
 {
     for(int i = 0; i < M3.rows; i++) {
         for(int j = 0; j < M3.cols; j++) {
@@ -24,8 +24,8 @@ int main()
     const int sizes[NUM_SIZES] = MATRIX_SIZES;
     double executionTimes[NUM_SIZES][100];
 
-    // Create results file in the Test directory
-    FILE *outputFile = fopen("Test/Addition_Ints_Runtime_All_Matrices.csv", "w");
+    // Create results file
+    FILE *outputFile = fopen("Test/Addition_Doubles_Runtime_All_Matrices.csv", "w");
     if (!outputFile) {
         perror("Unable to create the output file");
         return 1;
@@ -45,12 +45,12 @@ int main()
         int size = sizes[s];
 
         for (int run = 0; run < 100; run++) {
-            MatrixInts M1 = createMatrixInts(size, size);
-            MatrixInts M2 = createMatrixInts(size, size);
-            MatrixInts M3 = createMatrixInts(size, size);
+            MatrixDoubles M1 = createMatrixDoubles(size, size);
+            MatrixDoubles M2 = createMatrixDoubles(size, size);
+            MatrixDoubles M3 = createMatrixDoubles(size, size);
 
-            populateWithRandomInts(M1);
-            populateWithRandomInts(M2);
+            populateWithRandomDoubles(M1);
+            populateWithRandomDoubles(M2);
 
             beginTimer(&timer);
             additionSequential(M1, M2, M3);

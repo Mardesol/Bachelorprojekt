@@ -5,7 +5,7 @@
 #include "../../Matrix/Int/matrixInts.c"
 #include "../../Timer/timer.c"
 
-#define MATRIX_SIZES {50, 100, 200, 300, 400}
+#define MATRIX_SIZES {200, 300, 400, 500, 600}
 #define NUM_SIZES 5
 
 void multiplicationSequential(MatrixInts M1, MatrixInts M2, MatrixInts M3)

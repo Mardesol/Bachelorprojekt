@@ -5,8 +5,8 @@
 
 #include <curand_kernel.h>
 
-const int rows = 100;
-const int cols = 100;
+const int rows = 600;
+const int cols = 600;
 
 const int M1Rows = rows;
 const int M2Rows = rows;
