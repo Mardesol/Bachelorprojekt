@@ -13,7 +13,6 @@
 *.tlog
 Nsight/
 /Debug/
-*.csv
 *.log
 *.obj
 *.cache
