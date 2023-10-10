@@ -3,7 +3,8 @@
 
 #include "cuda_runtime.h"
 
-typedef struct Timer {
+typedef struct Timer
+{
 	cudaEvent_t start;
 	cudaEvent_t stop;
 } Timer;

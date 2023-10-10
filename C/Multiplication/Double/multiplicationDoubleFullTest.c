@@ -5,15 +5,21 @@
 #include "../../Matrix/Double/matrixDoubles.c"
 #include "../../Timer/timer.c"
 
-#define MATRIX_SIZES {200, 300, 400, 500, 600}
+#define MATRIX_SIZES            \
+    {                           \
+        200, 300, 400, 500, 600 \
+    }
 #define NUM_SIZES 5
 
 void multiplicationSequential(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
 {
-    for(int i = 0; i < M1.rows; i++) {
-        for(int j = 0; j < M2.cols; j++) {
+    for (int i = 0; i < M1.rows; i++)
+    {
+        for (int j = 0; j < M2.cols; j++)
+        {
             double sum = 0.0;
-            for (int k = 0; k < M1.cols; k++) {
+            for (int k = 0; k < M1.cols; k++)
+            {
                 double a = M1.data[i * M1.cols + k];
                 double b = M2.data[k * M2.cols + j];
                 sum = sum + (a * b);
@@ -25,14 +31,17 @@ void multiplicationSequential(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles 
 
 void multiplicationV2(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
 {
-    for(int i = 0; i < M1.rows; i++) {
-            int pos1 = i * M1.cols;
-            int pos2 = i * M3.cols;
-        
-        for(int j = 0; j < M2.cols; j++) {
+    for (int i = 0; i < M1.rows; i++)
+    {
+        int pos1 = i * M1.cols;
+        int pos2 = i * M3.cols;
+
+        for (int j = 0; j < M2.cols; j++)
+        {
             double sum = 0.0;
-            
-            for (int k = 0; k < M1.cols; k++) {
+
+            for (int k = 0; k < M1.cols; k++)
+            {
                 double a = M1.data[pos1 + k];
                 double b = M2.data[k * M2.cols + j];
                 sum = sum + (a * b);
@@ -43,7 +52,7 @@ void multiplicationV2(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
     }
 }
 
-int main() 
+int main()
 {
     // Setup
     Timer timer = createTimer();
@@ -52,25 +61,30 @@ int main()
 
     // Create results file in the Test directory
     FILE *outputFile = fopen("Test/Multiplication_Doubles_Runtime_All_Matrices.csv", "w");
-    if (!outputFile) {
+    if (!outputFile)
+    {
         perror("Unable to create the output file");
         return 1;
     }
 
     // Print the header (MATRIX_SIZES[0], MATRIX_SIZES[1], MATRIX_SIZES[2]...)
-    for(int s = 0; s < NUM_SIZES; s++) {
+    for (int s = 0; s < NUM_SIZES; s++)
+    {
         fprintf(outputFile, "%d", sizes[s]);
-        if(s != NUM_SIZES - 1) {
+        if (s != NUM_SIZES - 1)
+        {
             fprintf(outputFile, ", ");
         }
     }
     fprintf(outputFile, "\n");
 
     // Perform all runs
-    for(int s = 0; s < NUM_SIZES; s++) {
+    for (int s = 0; s < NUM_SIZES; s++)
+    {
         int size = sizes[s];
 
-        for (int run = 0; run < 100; run++) {
+        for (int run = 0; run < 100; run++)
+        {
             MatrixDoubles M1 = createMatrixDoubles(size, size);
             MatrixDoubles M2 = createMatrixDoubles(size, size);
             MatrixDoubles M3 = createMatrixDoubles(size, size);
@@ -80,7 +94,7 @@ int main()
 
             beginTimer(&timer);
             multiplicationSequential(M1, M2, M3);
-            double timeTaken = endTimerDouble(&timer);
+            double timeTaken = endTimer(&timer);
 
             executionTimes[s][run] = timeTaken;
 
@@ -91,10 +105,13 @@ int main()
     }
 
     // Write execution times to the file
-    for(int run = 0; run < 100; run++) {
-        for(int s = 0; s < NUM_SIZES; s++) {
+    for (int run = 0; run < 100; run++)
+    {
+        for (int s = 0; s < NUM_SIZES; s++)
+        {
             fprintf(outputFile, "%f", executionTimes[s][run]);
-            if(s != NUM_SIZES - 1) {
+            if (s != NUM_SIZES - 1)
+            {
                 fprintf(outputFile, ", ");
             }
         }

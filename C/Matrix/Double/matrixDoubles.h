@@ -2,7 +2,8 @@
 #define MATRIXFLOATS_H
 
 // Define Matrix as a typedef of struct Matrix
-typedef struct MatrixDoubles {
+typedef struct MatrixDoubles
+{
     int rows;
     int cols;
     double *data;

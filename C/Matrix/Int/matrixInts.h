@@ -2,7 +2,8 @@
 #define MATRIXINTS_H
 
 // Define Matrix as a typedef of struct Matrix
-typedef struct MatrixInts {
+typedef struct MatrixInts
+{
     int rows;
     int cols;
     int *data;

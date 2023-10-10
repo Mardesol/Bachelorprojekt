@@ -9,10 +9,13 @@
 
 void multiplicationSequential(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 {
-    for(int i = 0; i < M1.rows; i++) {
-        for(int j = 0; j < M2.cols; j++) {
+    for (int i = 0; i < M1.rows; i++)
+    {
+        for (int j = 0; j < M2.cols; j++)
+        {
             int sum = 0;
-            for (int k = 0; k < M1.cols; k++) {
+            for (int k = 0; k < M1.cols; k++)
+            {
                 int a = M1.data[i * M1.cols + k];
                 int b = M2.data[k * M2.cols + j];
                 sum = sum + (a * b);
@@ -24,14 +27,17 @@ void multiplicationSequential(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 
 void multiplicationV2(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 {
-    for(int i = 0; i < M1.rows; i++) {
-            int pos1 = i * M1.cols;
-            int pos2 = i * M3.cols;
-        
-        for(int j = 0; j < M2.cols; j++) {
+    for (int i = 0; i < M1.rows; i++)
+    {
+        int pos1 = i * M1.cols;
+        int pos2 = i * M3.cols;
+
+        for (int j = 0; j < M2.cols; j++)
+        {
             int sum = 0;
-            
-            for (int k = 0; k < M1.cols; k++) {
+
+            for (int k = 0; k < M1.cols; k++)
+            {
                 int a = M1.data[pos1 + k];
                 int b = M2.data[k * M2.cols + j];
                 sum = sum + (a * b);
@@ -42,7 +48,7 @@ void multiplicationV2(MatrixInts M1, MatrixInts M2, MatrixInts M3)
     }
 }
 
-int main() 
+int main()
 {
     // Start measuring time OS spends on process
     Timer timer = createTimer();
@@ -56,12 +62,13 @@ int main()
     populateWithRandomInts(M1);
     populateWithRandomInts(M2);
 
-    double executionTimes[100];                         // Array to store execution times for 100 iterations
+    double executionTimes[100]; // Array to store execution times for 100 iterations
 
-    for (int i = 0; i < 100; i++) {
-        beginTimer(&timer);                             // Start measuring time for this iteration
-        multiplicationSequential(M1, M2, M3);                 // Perform addition
-        executionTimes[i] = endTimerDouble(&timer);     // End measuring time for this iteration
+    for (int i = 0; i < 100; i++)
+    {
+        beginTimer(&timer);                   // Start measuring time for this iteration
+        multiplicationSequential(M1, M2, M3); // Perform addition
+        executionTimes[i] = endTimer(&timer); // End measuring time for this iteration
     }
 
     // Open a new file to write result into
@@ -69,11 +76,15 @@ int main()
     snprintf(filename, 100, "Test/Addition_Ints_Runtime_Matrix_Size_%d.csv", MATRIX_SIZE);
 
     FILE *outputFile = fopen(filename, "w");
-    if (outputFile == NULL) {
+    if (outputFile == NULL)
+    {
         perror("Unable to create the output file");
         return 1;
-    } else {
-        for(int i = 0; i < 100; i++) {
+    }
+    else
+    {
+        for (int i = 0; i < 100; i++)
+        {
             fprintf(outputFile, "%f\n", executionTimes[i]);
         }
     }

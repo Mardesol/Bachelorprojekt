@@ -16,17 +16,17 @@ struct Timer createTimer()
 }
 
 void beginTimer(Timer timer)
-{	
+{
 	cudaEventRecord(timer.start, 0);
 }
 
-void endTimer(Timer timer, const char* message, bool printDebug)
+void endTimer(Timer timer, const char *message, bool printDebug)
 {
 	float timeElapsed;
 	cudaEventRecord(timer.stop, 0);
 	cudaEventSynchronize(timer.stop);
 	cudaEventElapsedTime(&timeElapsed, timer.start, timer.stop);
-	
+
 	if (printDebug)
 		printf("Time spent on %s: %f ms\n", message, timeElapsed);
 }

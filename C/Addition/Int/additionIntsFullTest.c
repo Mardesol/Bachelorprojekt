@@ -5,19 +5,24 @@
 #include "../../Matrix/Int/matrixInts.c"
 #include "../../Timer/timer.c"
 
-#define MATRIX_SIZES {200, 800, 5000, 10000}
+#define MATRIX_SIZES          \
+    {                         \
+        200, 800, 5000, 10000 \
+    }
 #define NUM_SIZES 4
 
 void additionSequential(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 {
-    for(int i = 0; i < M3.rows; i++) {
-        for(int j = 0; j < M3.cols; j++) {
+    for (int i = 0; i < M3.rows; i++)
+    {
+        for (int j = 0; j < M3.cols; j++)
+        {
             M3.data[i * M3.cols + j] = M1.data[i * M1.cols + j] + M2.data[i * M2.cols + j];
         }
     }
 }
 
-int main() 
+int main()
 {
     // Setup
     Timer timer = createTimer();
@@ -26,25 +31,30 @@ int main()
 
     // Create results file in the Test directory
     FILE *outputFile = fopen("Test/Addition_Ints_Runtime_All_Matrices.csv", "w");
-    if (!outputFile) {
+    if (!outputFile)
+    {
         perror("Unable to create the output file");
         return 1;
     }
 
     // Print the header (MATRIX_SIZES[0], MATRIX_SIZES[1], MATRIX_SIZES[2]...)
-    for(int s = 0; s < NUM_SIZES; s++) {
+    for (int s = 0; s < NUM_SIZES; s++)
+    {
         fprintf(outputFile, "%d", sizes[s]);
-        if(s != NUM_SIZES - 1) {
+        if (s != NUM_SIZES - 1)
+        {
             fprintf(outputFile, ", ");
         }
     }
     fprintf(outputFile, "\n");
 
     // Perform all runs
-    for(int s = 0; s < NUM_SIZES; s++) {
+    for (int s = 0; s < NUM_SIZES; s++)
+    {
         int size = sizes[s];
 
-        for (int run = 0; run < 100; run++) {
+        for (int run = 0; run < 100; run++)
+        {
             MatrixInts M1 = createMatrixInts(size, size);
             MatrixInts M2 = createMatrixInts(size, size);
             MatrixInts M3 = createMatrixInts(size, size);
@@ -54,7 +64,7 @@ int main()
 
             beginTimer(&timer);
             additionSequential(M1, M2, M3);
-            double timeTaken = endTimerDouble(&timer);
+            double timeTaken = endTimer(&timer);
 
             executionTimes[s][run] = timeTaken;
 
@@ -65,10 +75,13 @@ int main()
     }
 
     // Write execution times to the file
-    for(int run = 0; run < 100; run++) {
-        for(int s = 0; s < NUM_SIZES; s++) {
+    for (int run = 0; run < 100; run++)
+    {
+        for (int s = 0; s < NUM_SIZES; s++)
+        {
             fprintf(outputFile, "%f", executionTimes[s][run]);
-            if(s != NUM_SIZES - 1) {
+            if (s != NUM_SIZES - 1)
+            {
                 fprintf(outputFile, ", ");
             }
         }
