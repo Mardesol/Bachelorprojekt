@@ -5,15 +5,15 @@ const bool printDebugMessages = false;
 
 // Function to measure kernel execution time
 float measureKernelExecutionTime(
-    void (*kernel)(double *, double *, double *),
-    double *M1, double *M2, double *M3,
+    void (*kernel)(double *, double *, double *, int, int),
+    double *M1, double *M2, double *M3, int MRows, int MCols,
     dim3 gridDim, dim3 blockDim)
 {
     Timer timer = createTimer();
     beginTimer(timer);
 
     cudaDeviceSynchronize();
-    kernel<<<gridDim, blockDim>>>(M1, M2, M3);
+    kernel<<<gridDim, blockDim>>>(M1, M2, M3, MRows, MCols);
     cudaDeviceSynchronize();
 
     return endTimerReturnTime(timer);
@@ -22,60 +22,59 @@ float measureKernelExecutionTime(
 // Function to measure execution times and store them in an array
 void measureExecutionTimes(
     float *executionTimes,
-    void (*kernel)(double *, double *, double *),
-    double *M1, double *M2, double *M3,
+    void (*kernel)(double *, double *, double *, int, int),
+    double *M1, double *M2, double *M3, int MRows, int MCols,
     dim3 gridDim, dim3 blockDim)
 {
     for (int i = 0; i < 100; i++)
     {
         // Measure execution time for the kernel
-        float time = measureKernelExecutionTime(kernel, M1, M2, M3, gridDim, blockDim);
+        float time = measureKernelExecutionTime(kernel, M1, M2, M3, MRows, MCols, gridDim, blockDim);
         executionTimes[i] = time;
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    if (!isCompatibleForAddition(M1Rows, M1Cols, M2Rows, M2Cols))
-    {
-        perror("Matrices must have the same size");
-        return 1;
-    }
-    // Timer measure time spent on a process
+    int MRows = atoi(argv[1]);
+    int MCols = atoi(argv[2]);
+    size_t memorySize = MRows * MCols * sizeof(double);
+
+    // Timer to measure time spent on a process
     Timer timer = createTimer();
 
     beginTimer(timer);
     MatrixD M1, M2, M3;
     double *device_M1, *device_M2, *device_M3;
-    initializeMatricesAndMemory(M1, M2, M3);
-    allocateMemoryOnGPU(device_M1, device_M2, device_M3);
-    copyMatricesToGPU(M1, M2, device_M1, device_M2);
+    initializeMatricesAndMemory(M1, M2, M3, MRows, MCols, MRows, MCols, MRows, MCols);
+    allocateMemoryOnGPU(device_M1, device_M2, device_M3, memorySize, memorySize, memorySize);
+    copyMatricesToGPU(M1, M2, device_M1, device_M2, memorySize, memorySize);
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
     // Define block and grid dimensions for CUDA kernel
     dim3 blockDim(16, 16);
-
-    if (M3Rows <= 16 && M3Cols <= 16)
+    
+    if (MRows <= 16 && MCols <= 16)
     {
-        blockDim = dim3(M3Cols, M3Rows); // Use matrix size for smaller matrices
+        blockDim = dim3(MCols, MRows); // Use matrix size for smaller matrices
     }
 
-    dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
+    dim3 gridDim((MCols + blockDim.x - 1) / blockDim.x, (MRows + blockDim.y - 1) / blockDim.y);
 
     // Create an array to store execution times for each kernel
     float executionTimes[3][100]; // 3 kernels, 100 executions each
 
     // Measure and record execution times for all kernels
-    measureExecutionTimes(executionTimes[0], Sequential, device_M1, device_M2, device_M3, gridDim, blockDim);
-    measureExecutionTimes(executionTimes[1], Parallel, device_M1, device_M2, device_M3, gridDim, blockDim);
-    measureExecutionTimes(executionTimes[2], SharedMemory, device_M1, device_M2, device_M3, gridDim, blockDim);
+    measureExecutionTimes(executionTimes[0], Sequential,    device_M1, device_M2, device_M3, MRows, MCols, gridDim, blockDim);
+    measureExecutionTimes(executionTimes[1], Parallel,      device_M1, device_M2, device_M3, MRows, MCols, gridDim, blockDim);
+    measureExecutionTimes(executionTimes[2], SharedMemory,  device_M1, device_M2, device_M3, MRows, MCols, gridDim, blockDim);
 
     // Copy the result matrix from device to host
-    cudaMemcpy(M3.data, device_M3, memorySize3, cudaMemcpyDeviceToHost);
+    cudaMemcpy(M3.data, device_M3, memorySize, cudaMemcpyDeviceToHost);
 
     // Open a new file to write the result into
     char fileName[100];                                                                     // Max length filename (Just needs to be long enough)
-    sprintf(fileName, "Test/Double_Execution_Times_Matrix_Size_%dx%d.csv", M3Rows, M3Cols); // Customize filename to reflect size of result matrix
+    sprintf(fileName, "Test/Double_Execution_Times_Matrix_Size_%dx%d.csv", MRows, MCols);   // Customize filename to reflect size of result matrix
     FILE *outputFile = fopen(fileName, "w");
     if (outputFile == NULL)
     {
