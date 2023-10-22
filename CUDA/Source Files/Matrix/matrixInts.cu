@@ -5,21 +5,6 @@
 
 #include <curand_kernel.h>
 
-const int rows = 600;
-const int cols = 600;
-
-const int M1Rows = rows;
-const int M2Rows = rows;
-const int M3Rows = rows;
-
-const int M3Cols = cols;
-const int M1Cols = cols;
-const int M2Cols = cols;
-
-const size_t memorySize1 = M1Rows * M1Cols * sizeof(int);
-const size_t memorySize2 = M2Rows * M2Cols * sizeof(int);
-const size_t memorySize3 = M3Rows * M3Cols * sizeof(int);
-
 // Create a matrix on the host
 MatrixI createMatrixInts(int rows, int cols)
 {
@@ -103,7 +88,7 @@ bool compareMatricesInts(MatrixI M1, MatrixI M2)
     return true; // Matrices match
 }
 
-void initializeMatricesAndMemory(MatrixI &M1, MatrixI &M2, MatrixI &M3)
+void initializeMatricesAndMemory(MatrixI &M1, MatrixI &M2, MatrixI &M3, int M1Rows, int M1Cols, int M2Rows, int M2Cols, int M3Rows, int M3Cols)
 {
     M1 = createMatrixInts(M1Rows, M1Cols);
     M2 = createMatrixInts(M2Rows, M2Cols);
@@ -113,14 +98,14 @@ void initializeMatricesAndMemory(MatrixI &M1, MatrixI &M2, MatrixI &M3)
     populateWithRandomInts(M2);
 }
 
-void allocateMemoryOnGPU(int *&device_M1, int *&device_M2, int *&device_M3)
+void allocateMemoryOnGPU(int *&device_M1, int *&device_M2, int *&device_M3, size_t memorySize1, size_t memorySize2, size_t memorySize3)
 {
     cudaMalloc((void **)&device_M1, memorySize1);
     cudaMalloc((void **)&device_M2, memorySize2);
     cudaMalloc((void **)&device_M3, memorySize3);
 }
 
-void copyMatricesToGPU(const MatrixI &M1, const MatrixI &M2, int *device_M1, int *device_M2)
+void copyMatricesToGPU(const MatrixI &M1, const MatrixI &M2, int *device_M1, int *device_M2, size_t memorySize1, size_t memorySize2)
 {
     cudaMemcpy(device_M1, M1.data, memorySize1, cudaMemcpyHostToDevice);
     cudaMemcpy(device_M2, M2.data, memorySize2, cudaMemcpyHostToDevice);

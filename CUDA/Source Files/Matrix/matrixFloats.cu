@@ -5,20 +5,18 @@
 
 #include <curand_kernel.h>
 
-const int rows = 600;
-const int cols = 600;
+//const int rows = 600;
+//const int cols = 600;
+//
+//const int M1Rows = rows;
+//const int M2Rows = rows;
+//const int M3Rows = rows;
+//
+//const int M3Cols = cols;
+//const int M1Cols = cols;
+//const int M2Cols = cols;
 
-const int M1Rows = rows;
-const int M2Rows = rows;
-const int M3Rows = rows;
 
-const int M3Cols = cols;
-const int M1Cols = cols;
-const int M2Cols = cols;
-
-const size_t memorySize1 = M1Rows * M1Cols * sizeof(float);
-const size_t memorySize2 = M2Rows * M2Cols * sizeof(float);
-const size_t memorySize3 = M3Rows * M3Cols * sizeof(float);
 
 // Create a matrix on the host
 MatrixF createMatrixFloats(int rows, int cols)
@@ -106,24 +104,24 @@ bool compareMatricesFloats(MatrixF M1, MatrixF M2)
     return true; // Matrices match
 }
 
-void initializeMatricesAndMemory(MatrixF &M1, MatrixF &M2, MatrixF &M3)
+void initializeMatricesAndMemory(MatrixF &M1, MatrixF &M2, MatrixF &M3, int M1Rows, int M1Cols, int M2Rows, int M2Cols, int M3Rows, int M3Cols)
 {
     M1 = createMatrixFloats(M1Rows, M1Cols);
     M2 = createMatrixFloats(M2Rows, M2Cols);
-    M3 = createMatrixFloats(M3Rows, M3Cols);
+    M3 = createMatrixFloats(M2Rows, M2Cols);
 
     populateWithRandomFloats(M1);
     populateWithRandomFloats(M2);
 }
 
-void allocateMemoryOnGPU(float *&device_M1, float *&device_M2, float *&device_M3)
+void allocateMemoryOnGPU(float *&device_M1, float *&device_M2, float *&device_M3, size_t memorySize1, size_t memorySize2, size_t memorySize3)
 {
     cudaMalloc((void **)&device_M1, memorySize1);
     cudaMalloc((void **)&device_M2, memorySize2);
     cudaMalloc((void **)&device_M3, memorySize3);
 }
 
-void copyMatricesToGPU(const MatrixF &M1, const MatrixF &M2, float *device_M1, float *device_M2)
+void copyMatricesToGPU(const MatrixF &M1, const MatrixF &M2, float *device_M1, float *device_M2, size_t memorySize1, size_t memorySize2)
 {
     cudaMemcpy(device_M1, M1.data, memorySize1, cudaMemcpyHostToDevice);
     cudaMemcpy(device_M2, M2.data, memorySize2, cudaMemcpyHostToDevice);

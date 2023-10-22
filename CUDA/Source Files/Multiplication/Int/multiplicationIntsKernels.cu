@@ -8,7 +8,7 @@
 #include "..\..\Matrix\matrixInts.cu"
 #include "..\..\Timer\timer.cu"
 
-__global__ void Sequential(int *M1, int *M2, int *M3)
+__global__ void Sequential(int *M1, int *M2, int *M3, int M1Rows, int M1Cols, int M2Cols)
 {
     for (int i = 0; i < M1Rows; i++)
     {
@@ -24,7 +24,7 @@ __global__ void Sequential(int *M1, int *M2, int *M3)
     }
 }
 
-__global__ void Parallel(int *M1, int *M2, int *M3)
+__global__ void Parallel(int *M1, int *M2, int *M3, int M1Rows, int M1Cols, int M2Cols)
 {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -41,7 +41,7 @@ __global__ void Parallel(int *M1, int *M2, int *M3)
     }
 }
 
-__global__ void SharedMemoryAndTiling(int *M1, int *M2, int *M3)
+__global__ void SharedMemoryAndTiling(int *M1, int *M2, int *M3, int M1Rows, int M1Cols, int M2Cols)
 {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
