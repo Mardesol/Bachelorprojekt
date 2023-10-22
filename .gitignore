@@ -16,3 +16,5 @@ Nsight/
 *.log
 *.obj
 *.cache
+*.csv
+*.exe
