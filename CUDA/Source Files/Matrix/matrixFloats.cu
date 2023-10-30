@@ -5,19 +5,6 @@
 
 #include <curand_kernel.h>
 
-//const int rows = 600;
-//const int cols = 600;
-//
-//const int M1Rows = rows;
-//const int M2Rows = rows;
-//const int M3Rows = rows;
-//
-//const int M3Cols = cols;
-//const int M1Cols = cols;
-//const int M2Cols = cols;
-
-
-
 // Create a matrix on the host
 MatrixF createMatrixFloats(int rows, int cols)
 {
