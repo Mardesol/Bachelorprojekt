@@ -91,6 +91,38 @@ bool compareMatricesFloats(MatrixF M1, MatrixF M2)
     return true; // Matrices match
 }
 
+MatrixF twoDim_to_MatrixF(float** twoDim, int rows, int cols)
+{
+    MatrixF matrix;
+    matrix.rows = rows;
+    matrix.cols = cols;
+
+    // Allocate host memory for the matrix data
+    matrix.data = (float *)malloc(rows * cols * sizeof(float));
+
+    for(int i = 0; i < rows; ++i) {
+        for(int j = 0; j < cols; ++j) {
+            matrix.data[i * cols + j] = twoDim[i][j];
+        }
+    }
+
+    return matrix;
+}
+
+float** MatrixF_to_twoDim(MatrixF matrix) {
+    float **twoDim = (float **)malloc(matrix.rows * sizeof(float *));
+    for(int i = 0; i < matrix.rows; ++i) {
+        twoDim[i] = (float *)malloc(matrix.cols * sizeof(float));
+    }
+
+    for(int i = 0; i < matrix.rows; ++i) {
+        for(int j = 0; j < matrix.cols; ++j) {
+            twoDim[i][j] = matrix.data[i * matrix.cols + j];
+        }
+    }
+    return twoDim;
+}
+
 void initializeMatricesAndMemory(MatrixF &M1, MatrixF &M2, MatrixF &M3, int M1Rows, int M1Cols, int M2Rows, int M2Cols, int M3Rows, int M3Cols)
 {
     M1 = createMatrixFloats(M1Rows, M1Cols);

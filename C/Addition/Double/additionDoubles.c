@@ -21,7 +21,7 @@ void additionSequential(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
 int main()
 {
     // Start measuring time OS spends on process
-    Timer timer = createTimer();
+    C_Timer timer = create_C_Timer();
 
     // Initialize matrices
     MatrixDoubles M1 = createMatrixDoubles(MATRIX_SIZE, MATRIX_SIZE);

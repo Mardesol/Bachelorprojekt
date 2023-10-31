@@ -25,7 +25,7 @@ void additionSequential(MatrixDoubles M1, MatrixDoubles M2, MatrixDoubles M3)
 int main()
 {
     // Setup
-    Timer timer = createTimer();
+    C_Timer timer = create_C_Timer();
     const int sizes[NUM_SIZES] = MATRIX_SIZES;
     double executionTimes[NUM_SIZES][100];
 

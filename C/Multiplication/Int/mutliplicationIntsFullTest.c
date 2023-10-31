@@ -55,7 +55,7 @@ void multiplicationV2(MatrixInts M1, MatrixInts M2, MatrixInts M3)
 int main()
 {
     // Setup
-    Timer timer = createTimer();
+    C_Timer timer = create_C_Timer();
     const int sizes[NUM_SIZES] = MATRIX_SIZES;
     double executionTimes[NUM_SIZES][100];
 

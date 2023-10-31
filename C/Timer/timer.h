@@ -4,15 +4,15 @@
 #include <windows.h>
 #include <time.h>
 
-typedef struct Timer
+typedef struct C_Timer
 {
     LARGE_INTEGER begin;
     LARGE_INTEGER end;
     LARGE_INTEGER frequency;
-} Timer;
+} C_Timer;
 
-Timer createTimer();
-void beginTimer(Timer *timer);
-double endTimer(Timer *timer);
+C_Timer create_C_Timer();
+void beginTimer(C_Timer *timer);
+double endTimer(C_Timer *timer);
 
 #endif

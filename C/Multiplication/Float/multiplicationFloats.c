@@ -51,7 +51,7 @@ void multiplicationV2(MatrixFloats M1, MatrixFloats M2, MatrixFloats M3)
 int main()
 {
     // Start measuring time OS spends on process
-    Timer timer = createTimer();
+    C_Timer timer = create_C_Timer();
 
     // Initialize matrices
     MatrixFloats M1 = createMatrixFloats(MATRIX_SIZE, MATRIX_SIZE);

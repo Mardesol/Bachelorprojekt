@@ -1,19 +1,19 @@
 #include "timer.h"
 #include <stdio.h>
 
-Timer createTimer()
+C_Timer create_C_Timer()
 {
-    Timer timer;
+    C_Timer timer;
     QueryPerformanceFrequency(&timer.frequency);
     return timer;
 }
 
-void beginTimer(Timer *timer)
+void beginTimer(C_Timer *timer)
 {
     QueryPerformanceCounter(&timer->begin);
 }
 
-double endTimer(Timer *timer)
+double endTimer(C_Timer *timer)
 {
     QueryPerformanceCounter(&timer->end);
     return (double)(timer->end.QuadPart - timer->begin.QuadPart) / timer->frequency.QuadPart;
