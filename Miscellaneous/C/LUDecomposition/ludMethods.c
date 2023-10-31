@@ -1,5 +1,3 @@
-#include <math.h>
-
 void LUD_Sequential(float **A, int n) {
     for (int i = 1; i <= n; i++) {
         for (int j = i; j <= n; j++) {

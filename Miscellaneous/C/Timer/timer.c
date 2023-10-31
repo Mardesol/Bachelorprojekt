@@ -16,5 +16,5 @@ void beginTimer(C_Timer *timer)
 double endTimer(C_Timer *timer)
 {
     QueryPerformanceCounter(&timer->end);
-    return ((double)(timer->end.QuadPart - timer->begin.QuadPart) / timer->frequency.QuadPart) * 1000.0;
+    return (double)(timer->end.QuadPart - timer->begin.QuadPart) / timer->frequency.QuadPart;
 }

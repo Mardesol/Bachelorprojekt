@@ -72,3 +72,4 @@ __global__ void LUD_Sequential_Partial_Pivoting(float* A, int n) {
         }
     }
 }
+

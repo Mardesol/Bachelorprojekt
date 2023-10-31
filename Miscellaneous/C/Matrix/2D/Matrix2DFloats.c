@@ -3,9 +3,9 @@
 #include <stdlib.h>
 
 // Create a matrix
-struct Matrix2DFloats createMatrix2DFloats(int rows, int cols)
+struct Matrix2D createMatrix2D(int rows, int cols)
 {
-    struct Matrix2DFloats matrix;
+    struct Matrix2D matrix;
     matrix.rows = rows;
     matrix.cols = cols;
 
@@ -30,7 +30,7 @@ struct Matrix2DFloats createMatrix2DFloats(int rows, int cols)
 }
 
 // Set all indices in matrix to hold value 1
-void populateWithOnesFloats(Matrix2DFloats matrix)
+void populateWithOnes(Matrix2D matrix)
 {
     for (int i = 1; i <= matrix.rows; i++) 
     {
@@ -41,7 +41,7 @@ void populateWithOnesFloats(Matrix2DFloats matrix)
     }
 }
 
-void populateWithRandomFloats(Matrix2DFloats matrix)
+void populateWithRandomFloats(Matrix2D matrix)
 {
     srand(42);
 
@@ -54,7 +54,7 @@ void populateWithRandomFloats(Matrix2DFloats matrix)
     }
 }
 
-void printMatrix2DToFile(char *fileName, Matrix2DFloats matrix)
+void printMatrix2DToFile(char *fileName, Matrix2D matrix)
 {
     FILE *outputFile = fopen(fileName, "w");
     if (outputFile == NULL)
