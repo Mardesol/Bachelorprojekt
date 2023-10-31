@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
     // Open a new file to write the result into
     char fileName[100];                                                                                           // Max length filename (Just needs to be long enough)
-    sprintf(fileName, "Test/Multiplication_%s_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols); // Customize filename to reflect size of result matrix
+    sprintf(fileName, "Test/Multiplication_%s_Floats_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols); // Customize filename to reflect size of result matrix
     printMatrixToFileFloats(fileName, M3);
 
     freeMemory(device_M1, device_M2, device_M3, M1, M2, M3);

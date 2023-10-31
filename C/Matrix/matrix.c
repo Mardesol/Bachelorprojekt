@@ -1,11 +1,11 @@
-#include "matrixFloats.h"
+#include "matrix.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 // Create a matrix
-struct MatrixFloats createMatrixFloats(int rows, int cols)
+struct Matrix createMatrix(int rows, int cols)
 {
-    struct MatrixFloats matrix;
+    struct Matrix matrix;
     matrix.rows = rows;
     matrix.cols = cols;
     matrix.data = (float *)malloc(rows * cols * sizeof(float));
@@ -20,7 +20,7 @@ struct MatrixFloats createMatrixFloats(int rows, int cols)
 }
 
 // Set all indices in matrix to hold value 1
-void populateWithOnesFloats(MatrixFloats matrix)
+void populateWithOnes(Matrix matrix)
 {
     for (int i = 0; i < matrix.rows; i++)
     {
@@ -32,7 +32,7 @@ void populateWithOnesFloats(MatrixFloats matrix)
 }
 
 // Generate random integers on the CPU using srand
-void populateWithRandomFloats(MatrixFloats matrix)
+void populateWithRandomFloats(Matrix matrix)
 {
     srand(42);
 

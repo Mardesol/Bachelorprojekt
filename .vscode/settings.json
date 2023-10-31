@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "matrix.h": "c"
+        "*.Vue": "vue",
+        "*.c": "c",
+        "matrix.h": "c",
+        "vector": "c",
+        "xstring": "c",
+        "xutility": "c"
     }
 }

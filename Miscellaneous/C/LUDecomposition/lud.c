@@ -5,13 +5,13 @@
 #include <time.h>
 
 #include "ludMethods.c"
-#include "../Matrix/2D/Matrix2D.c"
+#include "../Matrix/2D/matrix2DFloats.c"
 #include "../Timer/timer.c"
 
 #define MATRIX_SIZE 10
 #define TINY 1.0e-20 // A small number.
 
-void printLUDMatrixToFile(char* fileName, Matrix2D matrix)
+void printLUDMatrixToFile(char* fileName, Matrix2DFloats matrix)
 {
     FILE *outputFile = fopen(fileName, "w");
     if (outputFile == NULL)
@@ -56,7 +56,7 @@ int main()
     C_Timer timer = create_C_Timer();
 
     // Initialize matrices
-    Matrix2D matrix = createMatrix2D(MATRIX_SIZE, MATRIX_SIZE);
+    Matrix2DFloats matrix = createMatrix2DFloats(MATRIX_SIZE, MATRIX_SIZE);
 
     int *indx = (int *)malloc(MATRIX_SIZE * sizeof(int));
     float d;
@@ -72,7 +72,7 @@ int main()
 
     // Write the resulting L and U into a file
     char filename[100];
-    snprintf(filename, 100, "Test/result_%d.txt", MATRIX_SIZE);
+    snprintf(filename, 100, "output/result_%d.txt", MATRIX_SIZE);
     printLUDMatrixToFile(filename, matrix);
     printMatrix2DToFile("test.txt", matrix);
 

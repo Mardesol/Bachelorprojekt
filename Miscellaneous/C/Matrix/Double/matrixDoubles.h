@@ -11,7 +11,7 @@ typedef struct MatrixDoubles
 
 // Declare function prototypes
 MatrixDoubles createMatrixFloats(int rows, int cols);
-void populateWithOnesFloats(MatrixDoubles matrix);
+void populateWithOnes(MatrixDoubles matrix);
 void populateWithRandomFloats(MatrixDoubles matrix);
 
 #endif
