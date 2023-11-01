@@ -17,4 +17,7 @@ bool compareMatricesInts(MatrixI M1, MatrixI M2);
 bool compareMatricesFloats(MatrixF M1, MatrixF M2);
 bool compareMatricesDoubles(MatrixD M1, MatrixD M2);
 
+void LUD_Sequential(float *A, int n);
+void LUD_Sequential_Partial_Pivoting(float** A, int n);
+
 #endif

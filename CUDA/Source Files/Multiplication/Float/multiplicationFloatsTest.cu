@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
     size_t memorySize1 = M1Rows * M1Cols * sizeof(float);
 	size_t memorySize2 = M2Rows * M2Cols * sizeof(float);
 	size_t memorySize3 = M3Rows * M3Cols * sizeof(float);
+	
 	if (!isCompatibleForMultiplication(M1Cols, M2Rows))
 	{
 		perror("Matrices must be compatible");

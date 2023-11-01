@@ -1,20 +1,18 @@
 #include <math.h>
 
+
 void LUD_Sequential(float **A, int n) {
-    for (int i = 1; i <= n; i++) {
-        for (int j = i; j <= n; j++) {
-            
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
             float sum = A[i][j];
-            for (int k = 1; k < i; k++) {
+            for (int k = 0; k < i; k++) {
                 sum -= A[i][k] * A[k][j];
             }
             A[i][j] = sum;
         }
-
-        for (int j = i+1; j <= n; j++) {
-            
+        for (int j = i + 1; j < n; j++) {
             float sum = A[j][i];
-            for (int k = 1; k < i; k++) {
+            for (int k = 0; k < i; k++) {
                 sum -= A[j][k] * A[k][i];
             }
             A[j][i] = sum / A[i][i];
@@ -23,47 +21,105 @@ void LUD_Sequential(float **A, int n) {
 }
 
 void LUD_Sequential_Partial_Pivoting(float** A, int n) {
-    for (int i = 1; i <= n; i++) {
-
-        //Find pivot row                                    // Pivot row = row with the highest absolute value on the diagonal of the unworked rows
-        int pivotRow = i;                                   //Set pivot row to current row
-        float maxVal = fabs(A[i][i]);                       //Set max value to current rows diagonal
-        for (int p = i + 1; p <= n; p++) {                  //Check if another row below has a higher absolut value on the diagonal
+    for (int i = 0; i < n; i++) {
+        int pivotRow = i;
+        float maxVal = fabs(A[i][i]);
+        for (int p = i + 1; p < n; p++) {
             if (fabs(A[p][i]) > maxVal) {
-                maxVal = fabs(A[p][i]);                     //If yes, set that element to new max
-                pivotRow = p;                               //And that row to the pivot row
+                maxVal = fabs(A[p][i]);
+                pivotRow = p;
             }
         }
-
-        //Swap rows if needed
-        if (pivotRow != i) {                                //Checks if current row is not the pivot row
-            for (int j = 1; j <= n; j++) {                  //If not, swap the current row with the pivot row
-                float temp = A[i][j];                       
+        if (pivotRow != i) {
+            for (int j = 0; j < n; j++) {
+                float temp = A[i][j];
                 A[i][j] = A[pivotRow][j];
                 A[pivotRow][j] = temp;
             }
         }
-
-        //Perform LUD
-        for (int j = i; j <= n; j++) {
-
+        for (int j = i; j < n; j++) {
             float sum = A[i][j];
-            for (int k = 1; k < i; k++) {
+            for (int k = 0; k < i; k++) {
                 sum -= A[i][k] * A[k][j];
             }
             A[i][j] = sum;
         }
-
-        for (int j = i + 1; j <= n; j++) {
-
+        for (int j = i + 1; j < n; j++) {
             float sum = A[j][i];
-            for (int k = 1; k < i; k++) {
+            for (int k = 0; k < i; k++) {
                 sum -= A[j][k] * A[k][i];
             }
             A[j][i] = sum / A[i][i];
         }
     }
 }
+
+
+// void LUD_Sequential(float **A, int n) {
+    
+//     for (int i = 1; i <= n; i++) {
+//         for (int j = i; j <= n; j++) {
+            
+//             float sum = A[i][j];
+//             for (int k = 1; k < i; k++) {
+//                 sum -= A[i][k] * A[k][j];
+//             }
+//             A[i][j] = sum;
+//         }
+
+//         for (int j = i+1; j <= n; j++) {
+            
+//             float sum = A[j][i];
+//             for (int k = 1; k < i; k++) {
+//                 sum -= A[j][k] * A[k][i];
+//             }
+//             A[j][i] = sum / A[i][i];
+//         }
+//     }
+// }
+
+// void LUD_Sequential_Partial_Pivoting(float** A, int n) {
+//     for (int i = 1; i <= n; i++) {
+
+//         //Find pivot row                                    // Pivot row = row with the highest absolute value on the diagonal of the unworked rows
+//         int pivotRow = i;                                   //Set pivot row to current row
+//         float maxVal = fabs(A[i][i]);                       //Set max value to current rows diagonal
+//         for (int p = i + 1; p <= n; p++) {                  //Check if another row below has a higher absolut value on the diagonal
+//             if (fabs(A[p][i]) > maxVal) {
+//                 maxVal = fabs(A[p][i]);                     //If yes, set that element to new max
+//                 pivotRow = p;                               //And that row to the pivot row
+//             }
+//         }
+
+//         //Swap rows if needed
+//         if (pivotRow != i) {                                //Checks if current row is not the pivot row
+//             for (int j = 1; j <= n; j++) {                  //If not, swap the current row with the pivot row
+//                 float temp = A[i][j];                       
+//                 A[i][j] = A[pivotRow][j];
+//                 A[pivotRow][j] = temp;
+//             }
+//         }
+
+//         //Perform LUD
+//         for (int j = i; j <= n; j++) {
+
+//             float sum = A[i][j];
+//             for (int k = 1; k < i; k++) {
+//                 sum -= A[i][k] * A[k][j];
+//             }
+//             A[i][j] = sum;
+//         }
+
+//         for (int j = i + 1; j <= n; j++) {
+
+//             float sum = A[j][i];
+//             for (int k = 1; k < i; k++) {
+//                 sum -= A[j][k] * A[k][i];
+//             }
+//             A[j][i] = sum / A[i][i];
+//         }
+//     }
+// }
 
 /**
  * Given a matrix a[1..n][1..n], this routine replaces it by the LU decomposition of a rowwise
