@@ -10,7 +10,7 @@ typedef struct Matrix
 } Matrix;
 
 // Declare function prototypes
-Matrix createMatrix(int rows, int cols);
+Matrix create_C_Matrix(int rows, int cols);
 void populateWithOnes(Matrix matrix);
 void populateWithRandomFloats(Matrix matrix);
 

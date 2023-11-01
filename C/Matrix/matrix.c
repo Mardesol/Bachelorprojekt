@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 // Create a matrix
-struct Matrix createMatrix(int rows, int cols)
+struct Matrix create_C_Matrix(int rows, int cols)
 {
     struct Matrix matrix;
     matrix.rows = rows;

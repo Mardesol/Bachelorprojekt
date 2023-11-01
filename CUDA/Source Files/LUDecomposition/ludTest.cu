@@ -44,10 +44,10 @@ int main(int argc, char* argv[])
 	Timer timer = createTimer();
 
     beginTimer(timer);
-    MatrixF A;
+    Matrix A;
     float *device_A;
 
-    A = createMatrixFloats(ADim, ADim);
+    A = createMatrix(ADim, ADim);
     populateWithRandomFloats(A);
 
     cudaMalloc((void **)&device_A, memorySize);
@@ -68,9 +68,9 @@ int main(int argc, char* argv[])
 	float executionTimes[3][100]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureExecutionTimes(executionTimes[0], LUD_Sequential, 			        device_A, ADim, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[1], LUD_Sequential_Partial_Pivoting,   device_A, ADim, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[2], LUD_Block,                         device_A, ADim, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[0], Sequential, 			        device_A, ADim, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[1], Sequential_Partial_Pivoting,   device_A, ADim, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[2], LUD_Block,                     device_A, ADim, gridDim, blockDim);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(A.data, device_A, ADim * ADim * sizeof(float), cudaMemcpyDeviceToHost);

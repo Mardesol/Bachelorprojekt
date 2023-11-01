@@ -15,9 +15,9 @@ int main(int argc, char *argv[])
     C_Timer timer = create_C_Timer();
 
     // Initialize matrices
-    Matrix M1 = createMatrix(MRows, MCols);
-    Matrix M2 = createMatrix(MRows, MCols);
-    Matrix M3 = createMatrix(MRows, MCols);
+    Matrix M1 = create_C_Matrix(MRows, MCols);
+    Matrix M2 = create_C_Matrix(MRows, MCols);
+    Matrix M3 = create_C_Matrix(MRows, MCols);
 
     // Read data into M1 and M2
     populateWithRandomFloats(M1);

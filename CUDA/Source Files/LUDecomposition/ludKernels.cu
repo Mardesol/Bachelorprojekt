@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "..\Timer\timer.cu"
-#include "..\Matrix\matrixFloats.cu"
+#include "..\Matrix\matrix.cu"
 
 __global__ void Sequential(float* A, int n) {
     // Loop over each row
