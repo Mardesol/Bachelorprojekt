@@ -45,7 +45,7 @@ void populateWithRandomFloats(MatrixF matrix)
     {
         for (int j = 0; j < matrix.cols; j++)
         {
-            matrix.data[i * matrix.cols + j] = rand() / (float)rand();
+            matrix.data[i * matrix.cols + j] = (float)rand() / RAND_MAX; //rand() / (float)rand();
         }
     }
 }
@@ -72,17 +72,16 @@ void printMatrixToFileFloats(char *fileName, MatrixF M)
     fclose(outputFile); // Close the file after writing
 }
 
-// Comparison for float data type
 bool compareMatricesFloats(MatrixF M1, MatrixF M2)
 {
-
     const float ErrorMargin = (float)1;
+    //const float ErrorMargin = 1e-6f;
 
     for (int i = 0; i < M1.rows; i++)
     {
         for (int j = 0; j < M1.cols; j++)
         {
-            if (M1.data[i * M1.cols + j] - M2.data[i * M1.cols + j] > ErrorMargin)
+            if (fabs(M1.data[i * M1.cols + j] - M2.data[i * M1.cols + j]) > ErrorMargin)
             {
                 return false; // Matrices do not match
             }
