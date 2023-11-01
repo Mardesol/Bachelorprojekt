@@ -1,13 +1,6 @@
 #include "ludKernels.cu"
 #include "..\Matrix\matrixOperationsCPU.cu"
 
-// extern "C" {
-//     void LUD_Sequential(float **A, int n);
-//     void LUD_Sequential_Partial_Pivoting(float** A, int n);
-// }
-
-
-
 const bool printDebugMessages = true;
 const size_t FILENAME_MAX_LENGTH = 256;
 
@@ -32,10 +25,10 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, int ADi
         endTimer(timer, "Sequential LUD with pivoting (GPU)", printDebugMessages);
         break;
     case 3:
-        kernelName = "3";
+        kernelName = "LUD_Block";
         beginTimer(timer);
-
-        endTimer(timer, "3", printDebugMessages);
+        LUD_Block<<<gridDim, blockDim>>>(device_A, ADim);
+        endTimer(timer, "LUD_Block", printDebugMessages);
         break;
     default:
         kernelName = "Unknown";
@@ -65,16 +58,13 @@ int main(int argc, char *argv[])
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
     const char *kernelName = executeChosenKernel(KernelNumToPerform, device_A, ADim, timer);
-
     cudaMemcpy(A.data, device_A, memorySize, cudaMemcpyDeviceToHost);
 
     // Setup a CPU comparison matrix
     float** A_CPU_2D = MatrixF_to_twoDim(createMatrixFloats(ADim, ADim));
-    printf("Setup 2d matrix, %f \n", A_CPU_2D);
     LUD_Sequential(A_CPU_2D, ADim);
-    printf("CPU calculations done");
     MatrixF A_CPU_1D = twoDim_to_MatrixF(A_CPU_2D, ADim, ADim);
-    printf("Converted to 1D matrix, %f", A_CPU_1D);
+
 
     // Validate result by comparing to CPU calculations
     bool valid = compareMatricesFloats(A_CPU_1D, A);
@@ -102,3 +92,7 @@ int main(int argc, char *argv[])
     // Exit program
     return 0;
 }
+
+    //printf("Setup 2d matrix, %f \n", A_CPU_2D);
+    //printf("CPU calculations done");
+    //printf("Converted to 1D matrix, %f", A_CPU_1D);

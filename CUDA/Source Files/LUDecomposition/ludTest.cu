@@ -1,114 +1,106 @@
-// #include "ludKernels.cu"
-// #include "..\Matrix\matrixCompatability.cu"
+#include "ludKernels.cu"
+#include "..\Matrix\matrixCompatability.cu"
 
-// const bool printDebugMessages = false;
+const bool printDebugMessages = false;
 
-// // Function to measure kernel execution time
-// float measureKernelExecutionTime(
-// 	void (*kernel)(float *, float *, float *, int, int, int),
-// 	float *M1, float *M2, float *M3, int M1Rows, int M1Cols, int M2Cols,
-// 	dim3 gridDim, dim3 blockDim)
-// {
-// 	Timer timer = createTimer();
-// 	beginTimer(timer);
+// Function to measure kernel execution time
+float measureKernelExecutionTime(
+	void (*kernel)(float*, int),
+	float* device_A, int ADim,
+	dim3 gridDim, dim3 blockDim)
+{
+	Timer timer = createTimer();
+	beginTimer(timer);
 
-// 	cudaDeviceSynchronize();
-// 	kernel<<<gridDim, blockDim>>>(M1, M2, M3, M1Rows, M1Cols, M2Cols);
-// 	cudaDeviceSynchronize();
+	cudaDeviceSynchronize();
+	kernel<<<gridDim, blockDim>>>(device_A, ADim);
+	cudaDeviceSynchronize();
 
-// 	return endTimerReturnTime(timer);
-// }
+	return endTimerReturnTime(timer);
+}
 
-// // Function to measure execution times and store them in an array
-// void measureExecutionTimes(
-// 	float *executionTimes,
-// 	void (*kernel)(float *, float *, float *, int, int, int),
-// 	float *M1, float *M2, float *M3, int M1Rows, int M1Cols, int M2Cols,
-// 	dim3 gridDim, dim3 blockDim)
-// {
-// 	for (int i = 0; i < 100; i++)
-// 	{
-// 		// Measure execution time for the kernel
-// 		float time = measureKernelExecutionTime(kernel, M1, M2, M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
-// 		executionTimes[i] = time;
-// 	}
-// }
+// Function to measure execution times and store them in an array
+void measureExecutionTimes(
+	float *executionTimes,
+	void (*kernel)(float *, int),
+	float *A, int n,
+	dim3 gridDim, dim3 blockDim)
+{
+	for (int i = 0; i < 100; i++)
+	{
+		// Measure execution time for the kernel
+		float time = measureKernelExecutionTime(kernel, A, n, gridDim, blockDim);
+		executionTimes[i] = time;
+	}
+}
 
-// int main(int argc, char* argv[])
-// {
-// 	int M1Rows = atoi(argv[1]);
-//     int M1Cols = atoi(argv[2]);
-// 	int M2Rows = atoi(argv[3]);
-//     int M2Cols = atoi(argv[4]);
-// 	int M3Rows = M1Rows;
-//     int M3Cols = M2Cols;
+int main(int argc, char* argv[])
+{
+	int ADim = atoi(argv[1]); 
 
-//     size_t memorySize1 = M1Rows * M1Cols * sizeof(float);
-// 	size_t memorySize2 = M2Rows * M2Cols * sizeof(float);
-// 	size_t memorySize3 = M3Rows * M3Cols * sizeof(float);
-// 	if (!isCompatibleForMultiplication(M1Cols, M2Rows))
-// 	{
-// 		perror("Matrices must be compatible");
-// 		return 1;
-// 	}
+    size_t memorySize = ADim * ADim * sizeof(float);
 
-// 	// Timer measure time spent on a process
-// 	Timer timer = createTimer();
+	// Timer measure time spent on a process
+	Timer timer = createTimer();
 
-// 	beginTimer(timer);
-// 	MatrixF M1, M2, M3;
-// 	float *device_M1, *device_M2, *device_M3;
-// 	initializeMatricesAndMemory(M1, M2, M3, M1Rows, M1Cols, M2Rows, M2Cols, M3Rows, M3Cols);
-// 	allocateMemoryOnGPU(device_M1, device_M2, device_M3, memorySize1, memorySize2, memorySize3);
-// 	copyMatricesToGPU(M1, M2, device_M1, device_M2, memorySize1, memorySize2);
-// 	endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
+    beginTimer(timer);
+    MatrixF A;
+    float *device_A;
 
-// 	// Define block and grid dimensions for CUDA kernel
-// 	dim3 blockDim(16, 16);
+    A = createMatrixFloats(ADim, ADim);
+    populateWithRandomFloats(A);
 
-// 	if (M3Rows <= 16 && M3Cols <= 16)
-// 	{
-// 		blockDim = dim3(M3Cols, M3Rows); // Use matrix size for smaller matrices
-// 	}
+    cudaMalloc((void **)&device_A, memorySize);
+    cudaMemcpy(device_A, A.data, memorySize, cudaMemcpyHostToDevice);
+    endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
-// 	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
+	// Define block and grid dimensions for CUDA kernel
+	dim3 blockDim(16, 16);
 
-// 	// Create an array to store execution times for each kernel
-// 	float executionTimes[3][100]; // 3 kernels, 100 executions each
+	if (ADim <= 16)
+	{
+		blockDim = dim3(ADim, ADim); // Use matrix size for smaller matrices
+	}
 
-// 	// Measure and record execution times
-// 	measureExecutionTimes(executionTimes[0], Sequential, 			device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
-// 	measureExecutionTimes(executionTimes[1], Parallel,				device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
-// 	measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
+	dim3 gridDim((ADim + blockDim.x - 1) / blockDim.x, (ADim + blockDim.y - 1) / blockDim.y);
 
-// 	// Copy the result matrix from device to host
-// 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
+	// Create an array to store execution times for each kernel
+	float executionTimes[3][100]; // 3 kernels, 100 executions each
 
-// 	// Open a new file to write the result into
-// 	char fileName[100];																					  // Max length filename (Just needs to be long enough)
-// 	sprintf(fileName, "Test/Multiplication_Float_Execution_Times_Matrix_Size_%dx%d.csv", M3Rows, M3Cols); // Customize filename to reflect size of result matrix
-// 	FILE *outputFile = fopen(fileName, "w");
-// 	if (outputFile == NULL)
-// 	{
-// 		perror("Unable to create the output file");
-// 		return 1;
-// 	}
+	// Measure and record execution times
+	measureExecutionTimes(executionTimes[0], LUD_Sequential, 			        device_A, ADim, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[1], LUD_Sequential_Partial_Pivoting,   device_A, ADim, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[2], LUD_Block,                         device_A, ADim, gridDim, blockDim);
 
-// 	// Write execution times to the output file in separate columns
-// 	fprintf(outputFile, "Sequential,Parallel,SharedMemoryAndTilling\n");
-// 	for (int i = 0; i < 100; i++)
-// 	{
-// 		fprintf(outputFile, "%f,%f,%f\n",
-// 				executionTimes[0][i],
-// 				executionTimes[1][i],
-// 				executionTimes[2][i]);
-// 	}
+	// Copy the result matrix from device to host
+	cudaMemcpy(A.data, device_A, ADim * ADim * sizeof(float), cudaMemcpyDeviceToHost);
 
-// 	// Close the output file
-// 	fclose(outputFile);
+	// Open a new file to write the result into
+	char fileName[100];																					  // Max length filename (Just needs to be long enough)
+	sprintf(fileName, "Test/LUD_Execution_Times_Matrix_Size_%dx%d.csv", ADim, ADim); // Customize filename to reflect size of result matrix
+	FILE *outputFile = fopen(fileName, "w");
+	if (outputFile == NULL)
+	{
+		perror("Unable to create the output file");
+		return 1;
+	}
 
-// 	freeMemory(device_M1, device_M2, device_M3, M1, M2, M3);
+	// Write execution times to the output file in separate columns
+	fprintf(outputFile, "Sequential,SequentialPivot,Block\n");
+	for (int i = 0; i < 100; i++)
+	{
+		fprintf(outputFile, "%f,%f,%f\n",
+				executionTimes[0][i],
+				executionTimes[1][i],
+				executionTimes[2][i]);
+	}
 
-// 	// Exit program
-// 	return 0;
-// }
+	// Close the output file
+	fclose(outputFile);
+
+    free(A.data);
+    cudaFree(device_A);
+
+	// Exit program
+	return 0;
+}
