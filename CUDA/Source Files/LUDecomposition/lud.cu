@@ -4,7 +4,7 @@
 const bool printDebugMessages = true;
 const size_t FILENAME_MAX_LENGTH = 256;
 
-const char *executeChosenKernel(int KernelNumToPerform, float *device_A, int ADim, Timer timer)
+const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* A_CPU_Data, int ADim, Timer timer)
 {
     dim3 blockDim(16,16);
     dim3 gridDim((ADim + blockDim.x - 1) / blockDim.x, (ADim + blockDim.y - 1) / blockDim.y);
@@ -15,6 +15,7 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, int ADi
     {
     case 1:
         kernelName = "Sequential LUD (GPU)";
+        LUD_Sequential(A_CPU_Data, ADim);
         beginTimer(timer);
         Sequential<<<gridDim, blockDim>>>(device_A, ADim);
         cudaDeviceSynchronize();
@@ -22,6 +23,7 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, int ADi
         break;
     case 2:
         kernelName = "Sequential LUD with pivoting (GPU)";
+        LUD_Sequential_Partial_Pivoting(A_CPU_Data, ADim);
         beginTimer(timer);
         Sequential_Partial_Pivoting<<<1, 1>>>(device_A, ADim);
         cudaDeviceSynchronize();
@@ -58,33 +60,25 @@ int main(int argc, char *argv[])
     Timer timer = createTimer();
 
     beginTimer(timer);
-    MatrixF A;
+    Matrix A;
     float *device_A;
-    
-    A = createMatrixFloats(ADim, ADim);
+ 
+    A = createMatrix(ADim, ADim);
     populateWithRandomFloats(A);
+
+    Matrix A_CPU = createMatrix(ADim, ADim);
+    populateWithRandomFloats(A_CPU);
 
     cudaMalloc((void **)&device_A, memorySize);
     cudaMemcpy(device_A, A.data, memorySize, cudaMemcpyHostToDevice);
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
     // Execute Cuda Kernel
-    const char *kernelName = executeChosenKernel(KernelNumToPerform, device_A, ADim, timer);
+    const char *kernelName = executeChosenKernel(KernelNumToPerform, device_A, A_CPU.data, ADim, timer);
     cudaMemcpy(A.data, device_A, memorySize, cudaMemcpyDeviceToHost);
 
-    // Setup a CPU comparison matrix
-    //float** A_CPU_2D = MatrixF_to_twoDim(createMatrixFloats(ADim, ADim));
-    //LUD_Sequential(A_CPU_2D, ADim);
-    //MatrixF A_CPU_1D = twoDim_to_MatrixF(A_CPU_2D, ADim, ADim);
-
-    MatrixF A_CPU = createMatrixFloats(ADim, ADim);
-    populateWithRandomFloats(A_CPU);
-
-    //LUD_Sequential(A_CPU.data, ADim);
-    LUD_Sequential_Partial_Pivoting(A_CPU.data, ADim);
-
     // Validate result by comparing to CPU calculations
-    bool valid = compareMatricesFloats(A, A_CPU);
+    bool valid = compareMatrices(A, A_CPU);
     if (valid)
     {
         printf("Matrix LUD results match!\n");
@@ -96,12 +90,12 @@ int main(int argc, char *argv[])
         char fileNameCPU[100];
         sprintf(fileNameCPU, "Test/resultsCPU.txt");
 
-        printMatrixToFileFloats(fileNameCPU, A_CPU);
+        printMatrixToFile(fileNameCPU, A_CPU);
     }
 
     char fileName[FILENAME_MAX_LENGTH];
     sprintf(fileName, "Test/LUD_%s_Runtime_Matrix_Size_%dx%d.csv", kernelName, ADim, ADim);
-    printMatrixToFileFloats(fileName, A);
+    printMatrixToFile(fileName, A);
 
     cudaFree(device_A);
     free(A.data);
@@ -110,7 +104,3 @@ int main(int argc, char *argv[])
     // Exit program
     return 0;
 }
-
-    //printf("Setup 2d matrix, %f \n", A_CPU_2D);
-    //printf("CPU calculations done");
-    //printf("Converted to 1D matrix, %f", A_CPU_1D);

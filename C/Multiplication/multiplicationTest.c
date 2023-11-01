@@ -56,9 +56,9 @@ int main(int argc, char *argv[])
 
         for (int run = 0; run < 100; run++)
         {
-            Matrix M1 = createMatrix(size, size);
-            Matrix M2 = createMatrix(size, size);
-            Matrix M3 = createMatrix(size, size);
+            Matrix M1 = create_C_Matrix(size, size);
+            Matrix M2 = create_C_Matrix(size, size);
+            Matrix M3 = create_C_Matrix(size, size);
 
             populateWithRandomFloats(M1);
             populateWithRandomFloats(M2);
