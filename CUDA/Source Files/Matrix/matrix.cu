@@ -45,7 +45,8 @@ void populateWithRandomFloats(Matrix matrix)
     {
         for (int j = 0; j < matrix.cols; j++)
         {
-            matrix.data[i * matrix.cols + j] = (float)rand() / RAND_MAX; //rand() / (float)rand();
+            //matrix.data[i * matrix.cols + j] = (float)rand() / RAND_MAX;
+            matrix.data[i * matrix.cols + j] = (float)rand() / rand();
         }
     }
 }
