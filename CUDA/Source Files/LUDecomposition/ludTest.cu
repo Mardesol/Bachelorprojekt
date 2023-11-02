@@ -2,6 +2,7 @@
 #include "..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
+const int numTimesToRun = 20;
 
 // Function to measure kernel execution time
 float measureKernelExecutionTime(
@@ -26,7 +27,7 @@ void measureExecutionTimes(
 	float *A, int n,
 	dim3 gridDim, dim3 blockDim)
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < numTimesToRun; i++)
 	{
 		// Measure execution time for the kernel
 		float time = measureKernelExecutionTime(kernel, A, n, gridDim, blockDim);
@@ -65,12 +66,12 @@ int main(int argc, char* argv[])
 	dim3 gridDim((ADim + blockDim.x - 1) / blockDim.x, (ADim + blockDim.y - 1) / blockDim.y);
 
 	// Create an array to store execution times for each kernel
-	float executionTimes[3][100]; // 3 kernels, 100 executions each
+	float executionTimes[3][numTimesToRun]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
 	measureExecutionTimes(executionTimes[0], Sequential, 			        device_A, ADim, gridDim, blockDim);
 	measureExecutionTimes(executionTimes[1], Sequential_Partial_Pivoting,   device_A, ADim, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[2], LUD_Block,                     device_A, ADim, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[2], right_looking_lu,              device_A, ADim, gridDim, blockDim);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(A.data, device_A, ADim * ADim * sizeof(float), cudaMemcpyDeviceToHost);
@@ -86,8 +87,8 @@ int main(int argc, char* argv[])
 	}
 
 	// Write execution times to the output file in separate columns
-	fprintf(outputFile, "Sequential,SequentialPivot,Block\n");
-	for (int i = 0; i < 100; i++)
+	fprintf(outputFile, "Sequential,SequentialPivot,right_looking_lu\n");
+	for (int i = 0; i < numTimesToRun; i++)
 	{
 		fprintf(outputFile, "%f,%f,%f\n",
 				executionTimes[0][i],

@@ -1,13 +1,64 @@
 #include "ludKernels.cu"
 #include "..\Matrix\matrixOperationsCPU.cu"
+#include <cublas_v2.h>
 
 const bool printDebugMessages = true;
 const size_t FILENAME_MAX_LENGTH = 256;
+
+void LUD_cuSolver(float *device_A, int ADim, Timer timer) {
+    cusolverDnHandle_t handle;
+    cusolverDnCreate(&handle);
+
+    int *d_pivot, *d_info;
+    cudaMalloc((void **)&d_pivot, ADim * sizeof(int));
+    cudaMalloc((void **)&d_info, sizeof(int));
+
+    int lwork = 0;
+    cusolverDnSgetrf_bufferSize(handle, ADim, ADim, device_A, ADim, &lwork);
+    float *work;
+    cudaMalloc((void **)&work, lwork * sizeof(float));
+
+    beginTimer(timer);
+    cusolverDnSgetrf(handle, ADim, ADim, device_A, ADim, work, NULL, d_info);
+    cudaDeviceSynchronize();
+    endTimer(timer, "cuSolver LUD (GPU)", printDebugMessages);
+
+    // Clean up
+    cudaFree(d_pivot);
+    cudaFree(d_info);
+    cudaFree(work);
+    cusolverDnDestroy(handle);
+}
+
+void LUD_cuBLAS_Single(float *device_A, int ADim, Timer timer) {
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+
+    int *d_info;
+    cudaMalloc((void **)&d_info, sizeof(int));
+
+    // Wrap the pointer to device_A in an array for batched processing with batch size 1
+    float *device_A_array[1] = {device_A};
+
+    beginTimer(timer);
+    cublasSgetrfBatched(handle, ADim, device_A_array, ADim, NULL, d_info, 1);
+    cudaDeviceSynchronize();
+    endTimer(timer, "cuBLAS LUD Single (GPU)", printDebugMessages);
+
+    // Clean up
+    cudaFree(d_info);
+    cublasDestroy(handle);
+}
 
 const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* A_CPU_Data, int ADim, Timer timer)
 {
     dim3 blockDim(16,16);
     dim3 gridDim((ADim + blockDim.x - 1) / blockDim.x, (ADim + blockDim.y - 1) / blockDim.y);
+
+    // #define TILE_SIZE 16
+    // dim3 blockDim(TILE_SIZE, TILE_SIZE);
+    // dim3 gridDim((ADim + TILE_SIZE - 1) / TILE_SIZE, (ADim + TILE_SIZE - 1) / TILE_SIZE);
+    // size_t sharedMemSize = TILE_SIZE * TILE_SIZE * sizeof(float);
 
     const char *kernelName;
 
@@ -30,19 +81,16 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* 
         endTimer(timer, "Sequential LUD with pivoting (GPU)", printDebugMessages);
         break;
     case 3:
-        kernelName = "LUD_Block";
-        beginTimer(timer);
-        LUD_Block<<<gridDim, blockDim>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "LUD_Block", printDebugMessages);
+        kernelName = "cuSolver LUD (GPU)";
+        LUD_Sequential(A_CPU_Data, ADim);
+        LUD_cuSolver(device_A, ADim, timer);
         break;
     case 4:
-        kernelName = "LUD_Block_similar";
-        beginTimer(timer);
-        LUD_Block_Similar<<<gridDim, blockDim>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "LUD_Block_Similar", printDebugMessages);
+        kernelName = "cuBLAS LUD Single (GPU)";
+        LUD_Sequential(A_CPU_Data, ADim);
+        LUD_cuBLAS_Single(device_A, ADim, timer);
         break;
+    
     default:
         kernelName = "Unknown";
         break;
