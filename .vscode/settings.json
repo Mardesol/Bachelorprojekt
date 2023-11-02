@@ -5,6 +5,7 @@
         "matrix.h": "c",
         "vector": "c",
         "xstring": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "cstdlib": "cpp"
     }
 }
