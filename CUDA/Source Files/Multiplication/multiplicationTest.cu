@@ -65,9 +65,9 @@ int main(int argc, char* argv[])
 	endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
-	dim3 blockDim(16, 16);
+	dim3 blockDim((BLOCK_SIZE, BLOCK_SIZE));
 
-	if (M3Rows <= 16 && M3Cols <= 16)
+	if (M3Rows <= BLOCK_SIZE && M3Cols <= BLOCK_SIZE)
 	{
 		blockDim = dim3(M3Cols, M3Rows); // Use matrix size for smaller matrices
 	}
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 	float executionTimes[3][100]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureExecutionTimes(executionTimes[0], Sequential, 			device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[0], Sequential, 			device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, 1, 1);
 	measureExecutionTimes(executionTimes[1], Parallel,				device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
 	measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
 
