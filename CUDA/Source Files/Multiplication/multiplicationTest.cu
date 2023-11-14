@@ -3,7 +3,7 @@
 
 const bool printDebugMessages = false;
 
-// Function to measure kernel execution time
+// Measure execution time for a single kernel run
 float measureKernelExecutionTime(
 	void (*kernel)(float *, float *, float *, int, int, int),
 	float *M1, float *M2, float *M3, int M1Rows, int M1Cols, int M2Cols,
@@ -19,7 +19,7 @@ float measureKernelExecutionTime(
 	return endTimerReturnTime(timer);
 }
 
-// Function to measure execution times and store them in an array
+// Measure multiple execution times and store them in an array
 void measureExecutionTimes(
 	float *executionTimes,
 	void (*kernel)(float *, float *, float *, int, int, int),
@@ -65,22 +65,32 @@ int main(int argc, char* argv[])
 	endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
-	dim3 blockDim(16, 16);
+	dim3 blockDim_16(16, 16);
+	dim3 blockDim_32(32, 32);
 
+	// Use blocks of same size as matrix, if matrices are smaller than blocks
 	if (M3Rows <= 16 && M3Cols <= 16)
 	{
-		blockDim = dim3(M3Cols, M3Rows); // Use matrix size for smaller matrices
+		blockDim_16 = dim3(M3Cols, M3Rows); 
+		blockDim_32 = dim3(M3Cols, M3Rows); 
 	}
 
-	dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
+	// Calculate grids needed to compute all elements. 
+	// Small  blocks -> more grids
+	// Larger blocks -> fewer grids
+	dim3 gridDim_16((M3Cols + blockDim_16.x - 1) / blockDim_16.x, (M3Rows + blockDim_16.y - 1) / blockDim_16.y);
+	dim3 gridDim_32((M3Cols + blockDim_32.x - 1) / blockDim_32.x, (M3Rows + blockDim_32.y - 1) / blockDim_32.y);
 
 	// Create an array to store execution times for each kernel
-	float executionTimes[3][100]; // 3 kernels, 100 executions each
+	float executionTimes[5][100]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureExecutionTimes(executionTimes[0], Sequential, 			device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[1], Parallel,				device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
+	//measureExecutionTimes(executionTimes[0], Sequential, 					device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim, blockDim);
+	measureExecutionTimes(executionTimes[0], Parallel,						device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
+	measureExecutionTimes(executionTimes[1], SharedMemoryAndTiling, 		device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
+	measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling_32_32, 	device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_32, blockDim_32);
+	measureExecutionTimes(executionTimes[3], SharedMemory2DAndTiling, 		device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
+	measureExecutionTimes(executionTimes[4], SharedMemory2DAndTiling_32_32, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_32, blockDim_32);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
@@ -96,13 +106,16 @@ int main(int argc, char* argv[])
 	}
 
 	// Write execution times to the output file in separate columns
-	fprintf(outputFile, "Sequential,Parallel,SharedMemoryAndTilling\n");
+	fprintf(outputFile, "Parallel, SharedMemoryAndTilling, SharedMemoryAndTiling_32_32, SharedMemory2DAndTilling, SharedMemory2DAndTiling_32_32 \n");
 	for (int i = 0; i < 100; i++)
 	{
-		fprintf(outputFile, "%f,%f,%f\n",
+		fprintf(outputFile, "%f,%f,%f,%f,%f \n",
+				//executionTimes[0][i],
 				executionTimes[0][i],
 				executionTimes[1][i],
-				executionTimes[2][i]);
+				executionTimes[2][i],
+				executionTimes[3][i],
+				executionTimes[4][i]);
 	}
 
 	// Close the output file
