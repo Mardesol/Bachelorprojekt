@@ -127,3 +127,53 @@ void LUD_Sequential_Partial_Pivoting(float** A, int n) {
     }
 }
 
+
+
+
+
+//Copied from lud.cu
+void LUD_cuSolver(float* device_A, int ADim, Timer timer) {
+    cusolverDnHandle_t handle;
+    cusolverDnCreate(&handle);
+
+    int* d_pivot, * d_info;
+    cudaMalloc((void**)&d_pivot, ADim * sizeof(int));
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    int lwork = 0;
+    cusolverDnSgetrf_bufferSize(handle, ADim, ADim, device_A, ADim, &lwork);
+    float* work;
+    cudaMalloc((void**)&work, lwork * sizeof(float));
+
+    beginTimer(timer);
+    cusolverDnSgetrf(handle, ADim, ADim, device_A, ADim, work, NULL, d_info);
+    cudaDeviceSynchronize();
+    endTimer(timer, "cuSolver LUD (GPU)", printDebugMessages);
+
+    // Clean up
+    cudaFree(d_pivot);
+    cudaFree(d_info);
+    cudaFree(work);
+    cusolverDnDestroy(handle);
+}
+
+void LUD_cuBLAS_Single(float* device_A, int ADim, Timer timer) {
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+
+    int* d_info;
+    cudaMalloc((void**)&d_info, sizeof(int));
+
+    // Wrap the pointer to device_A in an array for batched processing with batch size 1
+    float* device_A_array[1] = { device_A };
+
+    beginTimer(timer);
+    cublasSgetrfBatched(handle, ADim, device_A_array, ADim, NULL, d_info, 1);
+    cudaDeviceSynchronize();
+    endTimer(timer, "cuBLAS LUD Single (GPU)", printDebugMessages);
+
+    // Clean up
+    cudaFree(d_info);
+    cublasDestroy(handle);
+}
+

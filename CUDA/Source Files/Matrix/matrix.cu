@@ -91,6 +91,33 @@ bool compareMatrices(Matrix M1, Matrix M2)
     return true; // Matrices match
 }
 
+bool compareAndPrintDifferences(Matrix M1, Matrix M2, char* fileName) {
+    const float ErrorMargin = (float)1;
+    // const float ErrorMargin = 1e-6f;
+    bool matricesMatch = true;
+
+    // Create a matrix for the differences using the createMatrix function
+    Matrix Differences = createMatrix(M1.rows, M1.cols);
+
+    for (int i = 0; i < M1.rows; i++) {
+        for (int j = 0; j < M1.cols; j++) {
+            float diff = fabs(M1.data[i * M1.cols + j] - M2.data[i * M1.cols + j]);
+            Differences.data[i * Differences.cols + j] = diff;
+
+            if (diff > ErrorMargin) {
+                matricesMatch = false;
+            }
+        }
+    }
+
+    printMatrixToFile(fileName, Differences);
+
+    free(Differences.data);
+
+    return matricesMatch;
+}
+
+
 Matrix twoDim_to_MatrixF(float** twoDim, int rows, int cols)
 {
     Matrix matrix;

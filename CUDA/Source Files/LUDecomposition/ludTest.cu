@@ -20,17 +20,43 @@ float measureKernelExecutionTime(
 	return endTimerReturnTime(timer);
 }
 
+// Function to measure kernel execution time
+float measureFunctionExecutionTime(
+	void (*function)(float*, int),
+	float* device_A, int ADim)
+{
+	Timer timer = createTimer();
+	beginTimer(timer);
+
+	function (device_A, ADim);
+
+	return endTimerReturnTime(timer);
+}
+
 // Function to measure execution times and store them in an array
-void measureExecutionTimes(
+void measureKernelExecutionTimes(
 	float *executionTimes,
 	void (*kernel)(float *, int),
-	float *A, int n,
+	float * device_A, int ADim,
 	dim3 gridDim, dim3 blockDim)
 {
 	for (int i = 0; i < numTimesToRun; i++)
 	{
 		// Measure execution time for the kernel
-		float time = measureKernelExecutionTime(kernel, A, n, gridDim, blockDim);
+		float time = measureKernelExecutionTime(kernel, device_A, ADim, gridDim, blockDim);
+		executionTimes[i] = time;
+	}
+}
+
+void measureFunctionExecutionTimes(
+	float* executionTimes,
+	void (*function)(float*, int),
+	float* device_A, int ADim)
+{
+	for (int i = 0; i < numTimesToRun; i++)
+	{
+		// Measure execution time for the kernel
+		float time = measureFunctionExecutionTime(function, device_A, ADim);
 		executionTimes[i] = time;
 	}
 }
@@ -69,9 +95,9 @@ int main(int argc, char* argv[])
 	float executionTimes[3][numTimesToRun]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureExecutionTimes(executionTimes[0], Sequential, 			        device_A, ADim, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[1], Sequential_Partial_Pivoting,   device_A, ADim, gridDim, blockDim);
-	measureExecutionTimes(executionTimes[2], right_looking_lu,              device_A, ADim, gridDim, blockDim);
+	measureKernelExecutionTimes		(executionTimes[0], Sequential, 			    device_A, ADim, 1, 1);
+	measureKernelExecutionTimes		(executionTimes[1], New_Sequential,				device_A, ADim, 1, 1);
+	measureFunctionExecutionTimes	(executionTimes[2], Right_Looking_Parallel_LUD, device_A, ADim);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(A.data, device_A, ADim * ADim * sizeof(float), cudaMemcpyDeviceToHost);
