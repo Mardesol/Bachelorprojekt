@@ -148,6 +148,7 @@ __global__ void New_Sequential_With_Partial_Pivoting(float* A, int n) {
     }
 }
 
+//Parallel kernels and main function
 
 __global__ void ComputeLowerColumn(float* A, int n, int i) {
     int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
@@ -167,7 +168,7 @@ __global__ void UpdateSubmatrix(float* A, int n, int i) {
     }
 }
 
-void Right_Looking_Parallel_LUD(float* A, int n, dim3 blockDim) {
+void Parallel(float* A, int n, dim3 blockDim) {
 
     // Loop over each row - Must be done 1 at the time
     for (int i = 0; i < n; i++) {
@@ -188,13 +189,55 @@ void Right_Looking_Parallel_LUD(float* A, int n, dim3 blockDim) {
     }
 }
 
+//Shared Memory kernels and main function
 
-//__global__ void UpdateSubmatrix(float* A, int n, int i) {
-//    int index = blockIdx.x * blockDim.x + threadIdx.x;
-//    int j = index / (n - i - 1) + i + 1;
-//    int k = index % (n - i - 1) + i + 1;
-//    if (j < n && k < n) {
-//        printf("U calculating index %d, %d, \n by %f - %f * %f, \n resulting in %f on index %d\n", j, k, A[j * n + k], A[i * n + k], A[j * n + i], A[j * n + k] - A[i * n + k] * A[j * n + i], j*n+k);
-//        A[j * n + k] = A[j * n + k] - A[i * n + k] * A[j * n + i];
-//    }
-//}
+__global__ void ComputeLowerColumnShared(float* A, int n, int i) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
+    int col = i;
+
+    if (row < n) {
+        __shared__ float sharedA[16 * 16];
+        sharedA[threadIdx.y] = A[row * n + col];
+        __syncthreads();
+
+        A[row * n + col] = sharedA[threadIdx.y] / A[i * n + i];
+    }
+}
+
+__global__ void UpdateSubmatrixShared(float* A, int n, int i) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
+    int col = blockIdx.x * blockDim.x + threadIdx.x + i + 1;
+
+    if (row < n && col < n) {
+        __shared__ float sharedA_row[16 * 16];
+        __shared__ float sharedA_col[16 * 16];
+
+        sharedA_row[threadIdx.y] = A[row * n + i];
+        sharedA_col[threadIdx.x] = A[i * n + col];
+
+        __syncthreads();
+
+        A[row * n + col] -= sharedA_row[threadIdx.y] * sharedA_col[threadIdx.x];
+    }
+}
+
+void SharedMemory(float* A, int n, dim3 blockDim) {
+
+    // Loop over each row - Must be done 1 at the time
+    for (int i = 0; i < n; i++) {
+
+        //Dimensions of the submatrix below/to the right of element (i,i)
+        int subMatrixDim = n - i - 1;
+
+        // Calculates the L values for row j
+        dim3 blockDimColumn(1, blockDim.y);
+        dim3 gridDimColumn(1, (subMatrixDim + blockDim.x - 1) / blockDim.x);
+        ComputeLowerColumnShared << <gridDimColumn, blockDimColumn >> > (A, n, i);
+        cudaDeviceSynchronize();
+
+        dim3 gridDimSubmatrix((subMatrixDim + blockDim.x - 1) / blockDim.x, (subMatrixDim + blockDim.y - 1) / blockDim.y);
+        UpdateSubmatrixShared << <gridDimSubmatrix, blockDim >> > (A, n, i);
+        cudaDeviceSynchronize();
+
+    }
+}

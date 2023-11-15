@@ -93,6 +93,7 @@ bool compareMatrices(Matrix M1, Matrix M2)
 
 bool compareAndPrintDifferences(Matrix M1, Matrix M2, char* fileName) {
     const float ErrorMargin = (float)1;
+    float sum = 0.0f;
     // const float ErrorMargin = 1e-6f;
     bool matricesMatch = true;
 
@@ -102,6 +103,7 @@ bool compareAndPrintDifferences(Matrix M1, Matrix M2, char* fileName) {
     for (int i = 0; i < M1.rows; i++) {
         for (int j = 0; j < M1.cols; j++) {
             float diff = fabs(M1.data[i * M1.cols + j] - M2.data[i * M1.cols + j]);
+            sum += diff;
             Differences.data[i * Differences.cols + j] = diff;
 
             if (diff > ErrorMargin) {
@@ -111,6 +113,10 @@ bool compareAndPrintDifferences(Matrix M1, Matrix M2, char* fileName) {
     }
 
     printMatrixToFile(fileName, Differences);
+
+    FILE* outputFile = fopen(fileName, "a");
+    fprintf(outputFile, "\n");
+    fprintf(outputFile, "Sum diff: %f ", sum);
 
     free(Differences.data);
 
@@ -148,6 +154,31 @@ float** MatrixF_to_twoDim(Matrix matrix) {
         }
     }
     return twoDim;
+}
+
+void pivotMatrix(float* A, int n) {
+    for (int i = 0; i < n; i++) {
+
+        // Find pivot row
+        int pivotRow = i;
+        float maxVal = fabsf(A[i * n + i]);
+
+        for (int p = i + 1; p < n; p++) {
+            if (fabsf(A[p * n + i]) > maxVal) {
+                maxVal = fabsf(A[p * n + i]);
+                pivotRow = p;
+            }
+        }
+
+        // Swap rows if needed
+        if (pivotRow != i) {
+            for (int j = 0; j < n; j++) {
+                float temp = A[i * n + j];
+                A[i * n + j] = A[pivotRow * n + j];
+                A[pivotRow * n + j] = temp;
+            }
+        }
+    }
 }
 
 void initializeMatricesAndMemory(Matrix &M1, Matrix &M2, Matrix &M3, int M1Rows, int M1Cols, int M2Rows, int M2Cols, int M3Rows, int M3Cols)

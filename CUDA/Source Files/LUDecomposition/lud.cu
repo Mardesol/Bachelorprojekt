@@ -51,19 +51,46 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* 
         endTimer(timer, "New_Sequential_With_Partial_Pivoting", printDebugMessages);
         break;
     case 5:
-        kernelName = "Right_Looking_Parallel_LUD";
+        kernelName = "Parallel";
         LUD_Sequential(A_CPU_Data, ADim);
         beginTimer(timer);
-        Right_Looking_Parallel_LUD(device_A, ADim, blockDim);
-        endTimer(timer, "Right_Looking_Parallel_LUD", printDebugMessages);
+        Parallel(device_A, ADim, blockDim);
+        endTimer(timer, "Parallel", printDebugMessages);
         break;
-    /*case 6:
-        kernelName = "Right_Looking_Parallel_LUD_With_Partial_Pivoting";
-        LUD_Sequential_Partial_Pivoting(A_CPU_Data, ADim);
+    case 6:
+        kernelName = "Parallel_Pivoted";
+        pivotMatrix(A_CPU_Data, ADim);
+        //Copy the pivoted Matrix into device memory
+        cudaMemcpy(device_A, A_CPU_Data, (ADim * ADim * sizeof(float)), cudaMemcpyHostToDevice);
+        LUD_Sequential(A_CPU_Data, ADim);
         beginTimer(timer);
-        Right_Looking_Parallel_LUD_With_Partial_Pivoting(device_A, ADim);
-        endTimer(timer, "Right_Looking_Parallel_LUD_With_Partial_Pivoting", printDebugMessages);
-        break;*/
+        Parallel(device_A, ADim, blockDim);
+        endTimer(timer, "Parallel_Pivoted", printDebugMessages);
+        break;
+    case 7:
+        kernelName = "Parallel_Kernel";
+        LUD_Sequential(A_CPU_Data, ADim);
+        beginTimer(timer);
+        Parallel_Kernel<<<gridDim, blockDim>>>(device_A, ADim);
+        endTimer(timer, "Parallel_Kernel", printDebugMessages);
+        break;
+    case 8:
+        kernelName = "SharedMemory";
+        LUD_Sequential(A_CPU_Data, ADim);
+        beginTimer(timer);
+        SharedMemory(device_A, ADim, blockDim);
+        endTimer(timer, "SharedMemory", printDebugMessages);
+        break;
+    case 9:
+        kernelName = "SharedMemory_Pivoted";
+        pivotMatrix(A_CPU_Data, ADim);
+        //Copy the pivoted Matrix into device memory
+        cudaMemcpy(device_A, A_CPU_Data, (ADim * ADim * sizeof(float)), cudaMemcpyHostToDevice);
+        LUD_Sequential(A_CPU_Data, ADim);
+        beginTimer(timer);
+        SharedMemory(device_A, ADim, blockDim);
+        endTimer(timer, "SharedMemory_Pivoted", printDebugMessages);
+        break;
     
     default:
         kernelName = "Unknown";
@@ -105,9 +132,10 @@ int main(int argc, char *argv[])
     // Validate result by comparing to CPU calculations
     // Write the CPU Matrix to text file for analysis
     char fileNameDiff[100];
-    sprintf(fileNameDiff, "Test/Differences_%d.txt", KernelNumToPerform);
+    sprintf(fileNameDiff, "Test/Differences_%d_%dx%d.txt", KernelNumToPerform, ADim, ADim);
 
     bool valid = compareAndPrintDifferences(A,A_CPU, fileNameDiff);
+
     if (valid)
     {
         printf("Matrix LUD results match!\n");
