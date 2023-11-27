@@ -2,7 +2,7 @@
 #include "..\Matrix\matrixCompatability.cu"
 
 const bool printDebugMessages = false;
-const int numTimesToRun = 20;
+const int numTimesToRun = 100;
 
 // Function to measure kernel execution time
 float measureKernelExecutionTime(
@@ -22,13 +22,13 @@ float measureKernelExecutionTime(
 
 // Function to measure kernel execution time
 float measureFunctionExecutionTime(
-	void (*function)(float*, int),
-	float* device_A, int ADim)
+	int* (*function)(float*, int, dim3),
+	float* device_A, int ADim, dim3 blockDim)
 {
 	Timer timer = createTimer();
 	beginTimer(timer);
 
-	function (device_A, ADim);
+	function (device_A, ADim, blockDim);
 
 	return endTimerReturnTime(timer);
 }
@@ -50,13 +50,13 @@ void measureKernelExecutionTimes(
 
 void measureFunctionExecutionTimes(
 	float* executionTimes,
-	void (*function)(float*, int),
-	float* device_A, int ADim)
+	int* (*function)(float*, int, dim3),
+	float* device_A, int ADim, dim3 blockDim)
 {
 	for (int i = 0; i < numTimesToRun; i++)
 	{
 		// Measure execution time for the kernel
-		float time = measureFunctionExecutionTime(function, device_A, ADim);
+		float time = measureFunctionExecutionTime(function, device_A, ADim, blockDim);
 		executionTimes[i] = time;
 	}
 }
@@ -82,9 +82,9 @@ int main(int argc, char* argv[])
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
-	dim3 blockDim(16, 16);
+	dim3 blockDim(32, 32);
 
-	if (ADim <= 16)
+	if (ADim <= 32)
 	{
 		blockDim = dim3(ADim, ADim); // Use matrix size for smaller matrices
 	}
@@ -95,9 +95,10 @@ int main(int argc, char* argv[])
 	float executionTimes[3][numTimesToRun]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureKernelExecutionTimes		(executionTimes[0], Sequential, 			    device_A, ADim, 1, 1);
-	measureKernelExecutionTimes		(executionTimes[1], New_Sequential,				device_A, ADim, 1, 1);
-	measureFunctionExecutionTimes	(executionTimes[2], Right_Looking_Parallel_LUD, device_A, ADim);
+	//measureKernelExecutionTimes		(executionTimes[0], Sequential, 			    device_A, ADim, 1, 1);
+	measureKernelExecutionTimes		(executionTimes[0], New_Sequential_With_Partial_Pivoting,	device_A, ADim, 1, 1);
+	measureFunctionExecutionTimes	(executionTimes[1], Parallel_Pivoted,						device_A, ADim, blockDim);
+	measureFunctionExecutionTimes	(executionTimes[2], SharedMemory_Pivoted,					device_A, ADim, blockDim);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(A.data, device_A, ADim * ADim * sizeof(float), cudaMemcpyDeviceToHost);
@@ -113,7 +114,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Write execution times to the output file in separate columns
-	fprintf(outputFile, "Sequential,SequentialPivot,right_looking_lu\n");
+	fprintf(outputFile, "Sequential,Parallel,Shared Memory\n");
 	for (int i = 0; i < numTimesToRun; i++)
 	{
 		fprintf(outputFile, "%f,%f,%f\n",

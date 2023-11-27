@@ -3,12 +3,12 @@
 
 const bool printDebugMessages = true;
 const size_t FILENAME_MAX_LENGTH = 256;
-
+int* hostPivotIndices;
 
 
 const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* A_CPU_Data, int ADim, Timer timer)
 {
-    dim3 blockDim(16,16);
+    dim3 blockDim(32,32);
     dim3 gridDim((ADim + blockDim.x - 1) / blockDim.x, (ADim + blockDim.y - 1) / blockDim.y);
 
     // #define TILE_SIZE 16
@@ -67,29 +67,24 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* 
         Parallel(device_A, ADim, blockDim);
         endTimer(timer, "Parallel_Pivoted", printDebugMessages);
         break;
-    case 7:
-        kernelName = "Parallel_Kernel";
-        LUD_Sequential(A_CPU_Data, ADim);
-        beginTimer(timer);
-        Parallel_Kernel<<<gridDim, blockDim>>>(device_A, ADim);
-        endTimer(timer, "Parallel_Kernel", printDebugMessages);
-        break;
+    //case 7:
+    //    kernelName = "SharedMemory";
+    //    LUD_Sequential(A_CPU_Data, ADim);
+    //    beginTimer(timer);
+    //    SharedMemory(device_A, ADim, blockDim);
+    //    endTimer(timer, "SharedMemory", printDebugMessages);
+    //    break;
     case 8:
-        kernelName = "SharedMemory";
-        LUD_Sequential(A_CPU_Data, ADim);
+        kernelName = "SharedMemory_Pivoted";
         beginTimer(timer);
-        SharedMemory(device_A, ADim, blockDim);
-        endTimer(timer, "SharedMemory", printDebugMessages);
+        hostPivotIndices = SharedMemory_Pivoted(device_A, ADim, blockDim);
+        endTimer(timer, "SharedMemory_Pivoted", printDebugMessages);
         break;
     case 9:
-        kernelName = "SharedMemory_Pivoted";
-        pivotMatrix(A_CPU_Data, ADim);
-        //Copy the pivoted Matrix into device memory
-        cudaMemcpy(device_A, A_CPU_Data, (ADim * ADim * sizeof(float)), cudaMemcpyHostToDevice);
-        LUD_Sequential(A_CPU_Data, ADim);
+        kernelName = "Parallel_Partial_Pivot";
         beginTimer(timer);
-        SharedMemory(device_A, ADim, blockDim);
-        endTimer(timer, "SharedMemory_Pivoted", printDebugMessages);
+        hostPivotIndices = Parallel_Pivoted(device_A, ADim, blockDim);
+        endTimer(timer, "Parallel_Pivoted", printDebugMessages);
         break;
     
     default:
@@ -129,12 +124,28 @@ int main(int argc, char *argv[])
     const char *kernelName = executeChosenKernel(KernelNumToPerform, device_A, A_CPU.data, ADim, timer);
     cudaMemcpy(A.data, device_A, memorySize, cudaMemcpyDeviceToHost);
 
-    // Validate result by comparing to CPU calculations
-    // Write the CPU Matrix to text file for analysis
+    //Split the result into a L and U matrix
+    Matrix L = createMatrix(ADim, ADim);
+    Matrix U = createMatrix(ADim, ADim);
+    printMatrixToFile("Original.txt", A);
+    separateLU(A.data, L.data, U.data, ADim);
+    printMatrixToFile("Lower.txt", L);
+    printMatrixToFile("Upper.txt", U);
+
+    //Multiply L and U for correctness check
+    Matrix LUProduct = createMatrix(ADim, ADim);
+    multiplication(L, U, LUProduct);
+    printMatrixToFile("Product.txt", LUProduct);
+
+    //Apply pivoting te the reconstructed matrix
+    applyPivoting(LUProduct.data, hostPivotIndices, ADim);
+
+
+    // Validate result by comparing to the input matrix
     char fileNameDiff[100];
     sprintf(fileNameDiff, "Test/Differences_%d_%dx%d.txt", KernelNumToPerform, ADim, ADim);
 
-    bool valid = compareAndPrintDifferences(A,A_CPU, fileNameDiff);
+    bool valid = compareAndPrintDifferences(A_CPU, LUProduct, fileNameDiff);
 
     if (valid)
     {
@@ -147,7 +158,7 @@ int main(int argc, char *argv[])
 
     char fileName[FILENAME_MAX_LENGTH];
     sprintf(fileName, "Test/LUD_%s_Runtime_Matrix_Size_%dx%d.csv", kernelName, ADim, ADim);
-    printMatrixToFile(fileName, A);
+    printMatrixToFile(fileName, LUProduct);
 
     cudaFree(device_A);
     free(A.data);
