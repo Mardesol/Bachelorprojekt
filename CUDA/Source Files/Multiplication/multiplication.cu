@@ -7,8 +7,12 @@ const bool printDebugMessages = false;
 // Execute the chosen kernel
 const char* executeChosenKernel(int KernelNumToPerform, float *device_M1, float *device_M2, float *device_M3, int M1Rows, int M1Cols, int M2Cols, Timer timer)
 {
-    dim3 blockDim(32, 32);
-    dim3 gridDim((M1Cols + blockDim.x - 1) / blockDim.x, (M1Rows + blockDim.y - 1) / blockDim.y);
+    dim3 blockDim_16(16, 16);
+    dim3 gridDim((M1Cols + blockDim_16.x - 1) / blockDim_16.x, (M1Rows + blockDim_16.y - 1) / blockDim_16.y);
+
+    dim3 blockDim_32(32, 32);
+    dim3 gridDim_32((M1Cols + blockDim_32.x - 1) / blockDim_32.x, (M1Rows + blockDim_32.y - 1) / blockDim_32.y);
+
     const char *kernelName;
 
     switch (KernelNumToPerform)
@@ -16,21 +20,45 @@ const char* executeChosenKernel(int KernelNumToPerform, float *device_M1, float 
     case 1:
         kernelName = "Sequential";
         beginTimer(timer);
-        Sequential<<<gridDim, blockDim>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
+        Sequential<<<gridDim, blockDim_16>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
         endTimer(timer, "Sequential matrix multiplication (GPU)", printDebugMessages);
         break;
+    
     case 2:
         kernelName = "Parallel";
         beginTimer(timer);
-        Parallel<<<gridDim, blockDim>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
+        Parallel<<<gridDim, blockDim_16>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
         endTimer(timer, "Parallel matrix multiplication (GPU)", printDebugMessages);
         break;
+    
     case 3:
         kernelName = "SharedMemoryAndTiling";
         beginTimer(timer);
-        SharedMemoryAndTiling<<<gridDim, blockDim>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
+        SharedMemoryAndTiling<<<gridDim, blockDim_16>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
         endTimer(timer, "SharedMemoryAndTiling matrix multiplication (GPU)", printDebugMessages);
         break;
+    
+    case 4:
+        kernelName = "SharedMemoryAndTiling_32_32";
+        beginTimer(timer);
+        SharedMemoryAndTiling_32_32<<<gridDim_32, blockDim_32>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
+        endTimer(timer, "SharedMemoryAndTiling matrix multiplication (GPU)", printDebugMessages);
+        break;
+
+    case 5:
+        kernelName = "SharedMemory2DAndTiling";
+        beginTimer(timer);
+        SharedMemory2DAndTiling<<<gridDim, blockDim_16>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
+        endTimer(timer, "SharedMemory2DAndTiling matrix multiplication (GPU)", printDebugMessages);
+        break;
+    
+    case 6:
+        kernelName = "SharedMemory2DAndTiling_32_32";
+        beginTimer(timer);
+        SharedMemory2DAndTiling_32_32<<<gridDim_32, blockDim_32>>>(device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols);
+        endTimer(timer, "SharedMemory2DAndTiling_V2 matrix multiplication (GPU)", printDebugMessages);
+        break;
+    
     default:
         kernelName = "Unknown";
         break;
@@ -69,16 +97,6 @@ int main(int argc, char *argv[])
     copyMatricesToGPU(M1, M2, device_M1, device_M2, memorySize1, memorySize2);
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
-    // Define block and grid dimensions for CUDA kernel
-    dim3 blockDim(16, 16);
-
-    if (M3Rows <= 16 && M3Cols <= 16)
-    {
-        blockDim = dim3(M3Cols, M3Rows); // Use matrix size for smaller matrices
-    }
-
-    dim3 gridDim((M3Cols + blockDim.x - 1) / blockDim.x, (M3Rows + blockDim.y - 1) / blockDim.y);
-
     const char* kernelName = executeChosenKernel(KernelNumToPerform, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, timer);
 
     // Copy the result matrix from device to host
@@ -99,7 +117,7 @@ int main(int argc, char *argv[])
         printf("Matrix multiplication results do not match.\n");
         // Write the CPU matrix to text file for analysis
         char fileNameCPU[100];
-        sprintf(fileNameCPU, "resultsIntsCPU.txt");
+        sprintf(fileNameCPU, "results_CPU.txt");
 
         printMatrixToFile(fileNameCPU, MCPU);
     }
