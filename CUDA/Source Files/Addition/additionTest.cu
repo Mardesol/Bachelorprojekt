@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     float executionTimes[3][100]; // 3 kernels, 100 executions each
 
     // Measure and record execution times for all kernels
-    measureExecutionTimes(executionTimes[0], Sequential,    device_M1, device_M2, device_M3, MRows, MCols, gridDim, blockDim);
+    measureExecutionTimes(executionTimes[0], Sequential,    device_M1, device_M2, device_M3, MRows, MCols, 1, 1);
     measureExecutionTimes(executionTimes[1], Parallel,      device_M1, device_M2, device_M3, MRows, MCols, gridDim, blockDim);
     measureExecutionTimes(executionTimes[2], SharedMemory,  device_M1, device_M2, device_M3, MRows, MCols, gridDim, blockDim);
 

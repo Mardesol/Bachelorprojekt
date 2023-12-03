@@ -3,46 +3,49 @@
 
 const bool printDebugMessages = true;
 const size_t FILENAME_MAX_LENGTH = 256;
+int* hostPivotIndices;
+
 
 const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* A_CPU_Data, int ADim, Timer timer)
 {
-    dim3 blockDim(16,16);
+    dim3 blockDim(32,32);
     dim3 gridDim((ADim + blockDim.x - 1) / blockDim.x, (ADim + blockDim.y - 1) / blockDim.y);
+
+    // #define TILE_SIZE 16
+    // dim3 blockDim(TILE_SIZE, TILE_SIZE);
+    // dim3 gridDim((ADim + TILE_SIZE - 1) / TILE_SIZE, (ADim + TILE_SIZE - 1) / TILE_SIZE);
+    // size_t sharedMemSize = TILE_SIZE * TILE_SIZE * sizeof(float);
 
     const char *kernelName;
 
     switch (KernelNumToPerform)
     {
     case 1:
-        kernelName = "Sequential LUD (GPU)";
+        kernelName = "New_Sequential";
         LUD_Sequential(A_CPU_Data, ADim);
         beginTimer(timer);
-        Sequential<<<gridDim, blockDim>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "Sequential LUD (GPU)", printDebugMessages);
+        New_Sequential << <1, 1>> > (device_A, ADim);
+        endTimer(timer, "New_Sequential", printDebugMessages);
         break;
     case 2:
-        kernelName = "Sequential LUD with pivoting (GPU)";
+        kernelName = "New_Sequential_With_Partial_Pivoting";
         LUD_Sequential_Partial_Pivoting(A_CPU_Data, ADim);
         beginTimer(timer);
-        Sequential_Partial_Pivoting<<<1, 1>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "Sequential LUD with pivoting (GPU)", printDebugMessages);
+        New_Sequential_With_Partial_Pivoting << <1, 1 >> > (device_A, ADim);
+        endTimer(timer, "New_Sequential_With_Partial_Pivoting", printDebugMessages);
         break;
     case 3:
-        kernelName = "LUD_Block";
+        kernelName = "Parallel_Partial_Pivot";
         beginTimer(timer);
-        LUD_Block<<<gridDim, blockDim>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "LUD_Block", printDebugMessages);
+        hostPivotIndices = Parallel_Pivoted(device_A, ADim, blockDim);
+        endTimer(timer, "Parallel_Pivoted", printDebugMessages);
         break;
     case 4:
-        kernelName = "LUD_Block_similar";
+        kernelName = "SharedMemory_Pivoted";
         beginTimer(timer);
-        LUD_Block_Similar<<<gridDim, blockDim>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "LUD_Block_Similar", printDebugMessages);
-        break;
+        hostPivotIndices = SharedMemory_Pivoted(device_A, ADim, blockDim);
+        endTimer(timer, "SharedMemory_Pivoted", printDebugMessages);
+        break; 
     default:
         kernelName = "Unknown";
         break;
@@ -74,11 +77,35 @@ int main(int argc, char *argv[])
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
     // Execute Cuda Kernel
+    char fileNameInput[100];
+    sprintf(fileNameInput, "input.txt");
+    printMatrixToFile(fileNameInput, A);
     const char *kernelName = executeChosenKernel(KernelNumToPerform, device_A, A_CPU.data, ADim, timer);
     cudaMemcpy(A.data, device_A, memorySize, cudaMemcpyDeviceToHost);
 
-    // Validate result by comparing to CPU calculations
-    bool valid = compareMatrices(A, A_CPU);
+    //Split the result into a L and U matrix
+    Matrix L = createMatrix(ADim, ADim);
+    Matrix U = createMatrix(ADim, ADim);
+    printMatrixToFile("Original.txt", A);
+    separateLU(A.data, L.data, U.data, ADim);
+    printMatrixToFile("Lower.txt", L);
+    printMatrixToFile("Upper.txt", U);
+
+    //Multiply L and U for correctness check
+    Matrix LUProduct = createMatrix(ADim, ADim);
+    multiplication(L, U, LUProduct);
+    printMatrixToFile("Product.txt", LUProduct);
+
+    //Apply pivoting te the reconstructed matrix
+    applyPivoting(LUProduct.data, hostPivotIndices, ADim);
+
+
+    // Validate result by comparing to the input matrix
+    char fileNameDiff[100];
+    sprintf(fileNameDiff, "Test/Differences_%d_%dx%d.txt", KernelNumToPerform, ADim, ADim);
+
+    bool valid = compareAndPrintDifferences(A_CPU, LUProduct, fileNameDiff);
+
     if (valid)
     {
         printf("Matrix LUD results match!\n");
@@ -86,16 +113,11 @@ int main(int argc, char *argv[])
     else
     {
         printf("Matrix LUD results do not match.\n");
-        // Write the CPU Matrix to text file for analysis
-        char fileNameCPU[100];
-        sprintf(fileNameCPU, "Test/resultsCPU.txt");
-
-        printMatrixToFile(fileNameCPU, A_CPU);
     }
 
     char fileName[FILENAME_MAX_LENGTH];
     sprintf(fileName, "Test/LUD_%s_Runtime_Matrix_Size_%dx%d.csv", kernelName, ADim, ADim);
-    printMatrixToFile(fileName, A);
+    printMatrixToFile(fileName, LUProduct);
 
     cudaFree(device_A);
     free(A.data);

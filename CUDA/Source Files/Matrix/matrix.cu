@@ -37,6 +37,30 @@ void populateWithOnes(Matrix matrix)
 }
 
 // Generate random floats on the CPU using srand
+void populateWithRandomFloats1(Matrix matrix)
+{
+    srand(42);
+
+    for (int i = 0; i < matrix.rows; i++)
+    {
+        for (int j = 0; j < matrix.cols; j++)
+        {
+            float rand1 = rand();
+            float rand2 = rand()+0.00001f;
+            float f = (float)rand1 / rand2;
+            if (isnan(f)) {
+                printf("I have created a nan: %f when %f / %f\n", f, rand1, rand2);
+            }
+            else if (isinf(f)) {
+                printf("I have created a inf: %f when %f / %f\n", f, rand1, rand2);
+            }
+            //matrix.data[i * matrix.cols + j] = (float)rand() / RAND_MAX;
+            //matrix.data[i * matrix.cols + j] = (float)rand() / rand();
+            matrix.data[i * matrix.cols + j] = f;
+        }
+    }
+}
+
 void populateWithRandomFloats(Matrix matrix)
 {
     srand(42);
@@ -45,7 +69,10 @@ void populateWithRandomFloats(Matrix matrix)
     {
         for (int j = 0; j < matrix.cols; j++)
         {
-            matrix.data[i * matrix.cols + j] = (float)rand() / RAND_MAX; //rand() / (float)rand();
+            //float rand1 = rand();
+            float rand2 = rand() + 0.00001f;
+            float f = rand2;
+            matrix.data[i * matrix.cols + j] = f;
         }
     }
 }
@@ -90,6 +117,48 @@ bool compareMatrices(Matrix M1, Matrix M2)
     return true; // Matrices match
 }
 
+bool compareAndPrintDifferences(Matrix M1, Matrix M2, char* fileName) {
+    const float ErrorMargin = (float)1;
+    float sum = 0.0f;
+    int bads = 0;
+    // const float ErrorMargin = 1e-6f;
+    bool matricesMatch = true;
+
+    // Create a matrix for the differences using the createMatrix function
+    Matrix Differences = createMatrix(M1.rows, M1.cols);
+
+    for (int i = 0; i < M1.rows; i++) {
+        for (int j = 0; j < M1.cols; j++) {
+            float diff = fabs(M1.data[i * M1.cols + j] - M2.data[i * M1.cols + j]);
+            /*if (isnan(diff)) {
+                printf("nan detected at index %d, %d, when calculating %f - %f\n", i, j, M1.data[i * M1.cols + j], M2.data[i * M1.cols + j]);
+            }*/
+            sum += diff;
+            Differences.data[i * Differences.cols + j] = diff;
+
+            if (diff > ErrorMargin) {
+                bads += 1;
+                matricesMatch = false;
+            }
+        }
+    }
+
+    printMatrixToFile(fileName, Differences);
+
+    FILE* outputFile = fopen(fileName, "a");
+    fprintf(outputFile, "\n");
+    fprintf(outputFile, "Sum diff: %f ", sum);
+    fprintf(outputFile, "\n");
+    fprintf(outputFile, "Bad results: %d", bads);
+    fprintf(outputFile, "\n");
+    fprintf(outputFile, "Percentage of results being bad: %f", ((float)(bads)/(M1.rows*M1.cols))*100.0f);
+
+    free(Differences.data);
+
+    return matricesMatch;
+}
+
+
 Matrix twoDim_to_MatrixF(float** twoDim, int rows, int cols)
 {
     Matrix matrix;
@@ -120,6 +189,31 @@ float** MatrixF_to_twoDim(Matrix matrix) {
         }
     }
     return twoDim;
+}
+
+void pivotMatrix(float* A, int n) {
+    for (int i = 0; i < n; i++) {
+
+        // Find pivot row
+        int pivotRow = i;
+        float maxVal = fabsf(A[i * n + i]);
+
+        for (int p = i + 1; p < n; p++) {
+            if (fabsf(A[p * n + i]) > maxVal) {
+                maxVal = fabsf(A[p * n + i]);
+                pivotRow = p;
+            }
+        }
+
+        // Swap rows if needed
+        if (pivotRow != i) {
+            for (int j = 0; j < n; j++) {
+                float temp = A[i * n + j];
+                A[i * n + j] = A[pivotRow * n + j];
+                A[pivotRow * n + j] = temp;
+            }
+        }
+    }
 }
 
 void initializeMatricesAndMemory(Matrix &M1, Matrix &M2, Matrix &M3, int M1Rows, int M1Cols, int M2Rows, int M2Cols, int M3Rows, int M3Cols)

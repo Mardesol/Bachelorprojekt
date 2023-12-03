@@ -8,6 +8,8 @@
 #include "..\Matrix\matrix.cu"
 #include "..\Timer\timer.cu"
 
+const int BLOCK_SIZE = 16;
+
 __global__ void Sequential(float *M1, float *M2, float *M3, int M1Rows, int M1Cols, int M2Cols)
 {
 	for (int i = 0; i < M1Rows; i++)
@@ -46,8 +48,8 @@ __global__ void SharedMemoryAndTiling(float *M1, float *M2, float *M3, int M1Row
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-	__shared__ float sharedMemory1[256];
-	__shared__ float sharedMemory2[256];
+	__shared__ float sharedMemory1[BLOCK_SIZE * BLOCK_SIZE];
+	__shared__ float sharedMemory2[BLOCK_SIZE * BLOCK_SIZE];
 
 	int sharedIndex = threadIdx.y * blockDim.x + threadIdx.x;
 

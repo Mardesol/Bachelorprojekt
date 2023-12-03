@@ -9,36 +9,36 @@
 #include "..\Timer\timer.cu"
 #include "..\Matrix\matrix.cu"
 
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+
+#include <cuda_runtime.h>
+#include <cusolverDn.h>
+
+#include <cusolverDn.h>
+#include <cuda_runtime_api.h>
+
+
 __global__ void Sequential(float* A, int n) {
-    // Loop over each row
+    // Loop over each row - Must be done 1 at the time
     for (int i = 0; i < n; i++) {
-        
-        // Compute U elements (upper triangular part)
-        for (int j = i; j < n; j++) {
-            
-            float sum = A[i * n + j];
-            // Subtract the lower * upper products from sum
-            for (int k = 0; k < i; k++) {
-                sum -= A[i * n + k] * A[k * n + j];
-            }
-            A[i * n + j] = sum;
-        }
 
         // Compute L elements (lower triangular part)
         for (int j = i + 1; j < n; j++) {
-            
-            float sum = A[j * n + i];
-            // Subtract the lower * upper products from sum
-            for (int k = 0; k < i; k++) {
-                sum -= A[j * n + k] * A[k * n + i];
+            A[j * n + i] = A[j * n + i] / A[i * n + i];
+        }
+        // Compute U elements (upper triangular part)
+        for (int j = i + 1; j < n; j++) {
+            for (int k = i + 1; k < n; k++) {
+                A[j * n + k] = A[j * n + k] - A[i * n + k] * A[j * n + i];
             }
-            // Divide by the diagonal element
-            A[j * n + i] = sum / A[i * n + i];
         }
     }
 }
 
-__global__ void Sequential_Partial_Pivoting(float* A, int n) {
+__global__ void Sequential_With_Partial_Pivoting(float* A, int n) {
+    // Loop over each row - Must be done 1 at the time
     for (int i = 0; i < n; i++) {
 
         // Find pivot row
@@ -63,158 +63,198 @@ __global__ void Sequential_Partial_Pivoting(float* A, int n) {
 
         __syncthreads();
 
-        // Perform LUD
-        for (int j = i; j < n; j++) {
-            float sum = A[i * n + j];
-            for (int k = 0; k < i; k++) {
-                sum -= A[i * n + k] * A[k * n + j];
-            }
-            A[i * n + j] = sum;
-        }
-
+        // Compute L elements (lower triangular part)
         for (int j = i + 1; j < n; j++) {
-            float sum = A[j * n + i];
-            for (int k = 0; k < i; k++) {
-                sum -= A[j * n + k] * A[k * n + i];
+            A[j * n + i] = A[j * n + i] / A[i * n + i];
+        }
+        // Compute U elements (upper triangular part)
+        for (int j = i + 1; j < n; j++) {
+            for (int k = i + 1; k < n; k++) {
+                A[j * n + k] = A[j * n + k] - A[i * n + k] * A[j * n + i];
             }
-            A[j * n + i] = sum / A[i * n + i];
         }
     }
 }
 
 
-// __global__ void LUD_Parallel(float* A, int n) {
 
-// }
+//Pivoting kernels
+//Combined kernel for finding pivot and swapping
+__global__ void PivotAndSwap(float* A, int* pivotIndices, int n, int i) {
+    // Find the pivot: maximum element in the current column
+    int maxIndex = i;
+    float maxValue = abs(A[i * n + i]);
 
-// __global__ void LUD_Block(float* A, int n) {
-    
-//     int bx = blockIdx.x;
-//     int by = blockIdx.y;
-//     int tx = threadIdx.x; 
-//     int ty = threadIdx.y;
-//     int bdx = blockDim.x;
-//     int bdy = blockDim.y;
-//     const int blockSize = 4;
-
-//     __shared__ float tile[blockSize][blockSize];
-
-//     // Load tile into shared memory
-// 	int row = by * bdy + ty;
-// 	int col = bx * bdx + tx;
-
-//     if(row < n && col < n) {
-//         tile[ty][tx] = A[row * n + col];
-//     }
-//     __syncthreads();
-
-//     // Perform LUD on the tile
-//     for (int k = 0; k < blockSize; k++) {
-//         if (tx == k && ty > k) {
-//             tile[ty][tx] /= tile[k][k];
-//         }
-//         __syncthreads();
-//         if (ty > k) {
-//             for (int j = k+1; j < blockSize; j++) {
-//                 if (tx == j) {
-//                     tile[ty][tx] -= tile[ty][k] * tile[k][j];
-//                 }
-//             }
-//         }
-//         __syncthreads();
-//     }
-
-//     // Write tile back to global memory
-//     if(row < n && col < n) {
-//         A[row * n + col] = tile[ty][tx];
-//     }
-// }
-
-__global__ void LUD_Block(float* A, int n) {
-    const int blockSize = 16; // Assuming block size is 16x16
-    __shared__ float tile[blockSize][blockSize];
-
-    int bx = blockIdx.x;
-    int by = blockIdx.y;
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
-
-    int row = by * blockSize + ty;
-    int col = bx * blockSize + tx;
-
-    // Load tile into shared memory
-    if(row < n && col < n) {
-        tile[ty][tx] = A[row * n + col];
+    for (int row = i + 1; row < n; ++row) {
+        float value = abs(A[row * n + i]);
+        if (value > maxValue) {
+            maxIndex = row;
+            maxValue = value;
+        }
     }
+
+    pivotIndices[i] = maxIndex;
+
+    // Swap rows if necessary
+    if (maxIndex != i) {
+        for (int col = 0; col < n; ++col) {
+            float temp = A[i * n + col];
+            A[i * n + col] = A[maxIndex * n + col];
+            A[maxIndex * n + col] = temp;
+        }
+    }
+}
+
+//Seperate kernels for finding pivot and swapping
+__global__ void FindPivot(float* A, int* pivotIndices, int n, int i) {
+    int maxIndex = i;
+    float maxValue = abs(A[i * n + i]);
+
+    for (int row = i + 1; row < n; ++row) {
+        float value = abs(A[row * n + i]);
+        if (value > maxValue) {
+            maxIndex = row;
+            maxValue = value;
+        }
+    }
+    pivotIndices[i] = maxIndex;
+}
+
+__global__ void SwapRows(float* A, int* pivotIndices, int n, int i) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    for (int col = tid; col < n; col += blockDim.x * gridDim.x) {
+        float temp = A[i * n + col];
+        A[i * n + col] = A[pivotIndices[i] * n + col];
+        A[pivotIndices[i] * n + col] = temp;
+    }
+}
+
+
+//Parallel kernels and main function
+__global__ void ComputeLowerColumn(float* A, int n, int i) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
+
+    if (row < n) {
+        A[row * n + i] = A[row * n + i] / A[i * n + i];
+    }
+}
+
+__global__ void UpdateSubmatrix(float* A, int n, int i) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
+    int col = blockIdx.x * blockDim.x + threadIdx.x + i + 1;
+
+    if (row < n && col < n) {
+        A[row * n + col] = A[row * n + col] - A[i * n + col] * A[row * n + i];
+    }
+}
+
+int* Parallel_Pivoted(float* A, int n, dim3 blockDim) {
+
+    int* pivotIndices;
+    cudaMalloc(&pivotIndices, n * sizeof(int));
+
+    // Loop over each row - Must be done 1 at the time
+    for (int i = 0; i < n; i++) {
+
+        // Find pivot and swap
+        
+        dim3 blockDimRow(blockDim.x, 1);
+        dim3 gridDimRow((n + blockDim.x - 1) / blockDim.x, 1);
+        //PivotAndSwap << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
+        //PivotAndSwap << <1, 1>> > (A, pivotIndices, n, i);
+        FindPivot << <1,1>> > (A, pivotIndices, n, i);
+        SwapRows << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
+        cudaDeviceSynchronize();
+
+        //Dimensions of the submatrix below/to the right of element (i,i)
+        int subMatrixDim = n - i - 1;
+
+        // Calculates the L values for row j
+        dim3 blockDimColumn(1, blockDim.y);
+        dim3 gridDimColumn(1, (subMatrixDim + blockDim.x - 1) / blockDim.x);
+        ComputeLowerColumn << <gridDimColumn, blockDimColumn >> > (A, n, i);
+
+        dim3 gridDimSubmatrix((subMatrixDim + blockDim.x - 1) / blockDim.x, (subMatrixDim + blockDim.y - 1) / blockDim.y);
+        UpdateSubmatrix << <gridDimSubmatrix, blockDim >> > (A, n, i);
+
+    }
+
+    int* hostPivotIndices = (int*)malloc(n * sizeof(int));
+    cudaMemcpy(hostPivotIndices, pivotIndices, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+    cudaFree(pivotIndices);
+    return hostPivotIndices;
+}
+
+
+
+
+//Shared Memory kernels and main function
+__global__ void ComputeLowerColumnShared(float* A, int n, int i) {
+    __shared__ float pivotElement;
+    pivotElement = A[i * n + i];
+
+    int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
+
+    if (row < n) {
+        A[row * n + i] /= pivotElement;
+    }
+}
+
+__global__ void UpdateSubmatrixShared(float* A, int n, int i) {
+    __shared__ float sharedRow[32];
+    __shared__ float sharedCol[32];
+
+    int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
+    int col = blockIdx.x * blockDim.x + threadIdx.x + i + 1;
+
+    if (row < n && threadIdx.x == 0) {
+        sharedCol[threadIdx.y] = A[row * n + i];
+    }
+    if (col < n && threadIdx.y == 0) {
+        sharedRow[threadIdx.x] = A[i * n + col];
+    }
+
     __syncthreads();
 
-    for (int k = 0; k < blockSize; k++) {
-        // Diagonal elements
-        if (tx == k && ty == k) {
-            for (int j = k + 1; j < blockSize; j++) {
-                tile[k][j] /= tile[k][k];
-            }
-        }
-        __syncthreads();
-
-        // Off-diagonal elements
-        if (tx > k && ty > k) {
-            tile[ty][tx] -= tile[ty][k] * tile[k][tx];
-        }
-        __syncthreads();
-    }
-
-    // Write tile back to global memory
-    if(row < n && col < n) {
-        A[row * n + col] = tile[ty][tx];
+    if (row < n && col < n) {
+        A[row * n + col] -= sharedRow[threadIdx.x] * sharedCol[threadIdx.y];
     }
 }
 
-__global__ void LUD_Block_Similar(float* A, int n) {
-    const int blockSize = 16; // Assuming block size is 16x16
-    __shared__ float tile[blockSize][blockSize];
+int* SharedMemory_Pivoted(float* A, int n, dim3 blockDim) {
+    int* pivotIndices;
+    cudaMalloc(&pivotIndices, n * sizeof(int));
 
-    int bx = blockIdx.x;
-    int by = blockIdx.y;
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
+    // Loop over each row - Must be done 1 at the time
+    for (int i = 0; i < n; i++) {
 
-    int row = by * blockSize + ty;
-    int col = bx * blockSize + tx;
+        //Pivot&Swap
+        dim3 blockDimRow(blockDim.x, 1);
+        dim3 gridDimRow((n + blockDim.x - 1) / blockDim.x, 1);
+        //PivotAndSwap << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
+        //PivotAndSwap << <1, 1 >> > (A, pivotIndices, n, i);
+        FindPivot << <1, 1 >> > (A, pivotIndices, n, i);
+        SwapRows << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
+        cudaDeviceSynchronize();
 
-    // Load tile into shared memory
-    if(row < n && col < n) {
-        tile[ty][tx] = A[row * n + col];
-    }
-    __syncthreads();
+        //Dimensions of the submatrix below/to the right of element (i,i)
+        int subMatrixDim = n - i - 1;
 
-    for (int i = 0; i < blockSize; i++) {
-        float sum = 0;
+        dim3 blockDimColumn(1, blockDim.y);
+        dim3 gridDimColumn(1, (subMatrixDim + blockDim.x - 1) / blockDim.x);
+        ComputeLowerColumnShared << <gridDimColumn, blockDimColumn >> > (A, n, i);
 
-        // Upper triangular matrix
-        if (ty == i && tx >= i) {
-            for (int j = 0; j < i; j++) {
-                sum += tile[i][j] * tile[j][tx];
-            }
-            tile[i][tx] -= sum;
-        }
+        dim3 gridDimSubmatrix((subMatrixDim + blockDim.x - 1) / blockDim.x, (subMatrixDim + blockDim.y - 1) / blockDim.y);
+        UpdateSubmatrixShared << <gridDimSubmatrix, blockDim >> > (A, n, i);
 
-        __syncthreads();
-
-        // Lower triangular matrix
-        if (ty > i && tx == i) {
-            sum = 0;
-            for (int j = 0; j < i; j++) {
-                sum += tile[ty][j] * tile[j][i];
-            }
-            tile[ty][i] = (tile[ty][i] - sum) / tile[i][i];
-        }
-
-        __syncthreads();
     }
 
-    // Write tile back to global memory
-    if(row < n && col < n) {
-        A[row * n + col] = tile[ty][tx];
-    }
+    int* hostPivotIndices = (int*)malloc(n * sizeof(int));
+    cudaMemcpy(hostPivotIndices, pivotIndices, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+    cudaFree(pivotIndices);
+    return hostPivotIndices;
 }
+
