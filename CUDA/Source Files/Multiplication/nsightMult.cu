@@ -85,41 +85,15 @@ int main(int argc, char* argv[])
 	float executionTimes[5][100]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	measureExecutionTimes(executionTimes[0], Sequential, 					device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, 1, 1);
+	//measureExecutionTimes(executionTimes[0], Sequential, 					device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, 1, 1);
 	//measureExecutionTimes(executionTimes[0], Parallel,						device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
-	//measureExecutionTimes(executionTimes[1], SharedMemoryAndTiling, 		device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
-	//measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling_32_32, 	device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_32, blockDim_32);
-	//measureExecutionTimes(executionTimes[3], SharedMemory2DAndTiling, 		device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
-	//measureExecutionTimes(executionTimes[4], SharedMemory2DAndTiling_32_32, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_32, blockDim_32);
+	measureExecutionTimes(executionTimes[1], SharedMemoryAndTiling, 		device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
+	measureExecutionTimes(executionTimes[2], SharedMemoryAndTiling_32_32, 	device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_32, blockDim_32);
+	measureExecutionTimes(executionTimes[3], SharedMemory2DAndTiling, 		device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_16, blockDim_16);
+	measureExecutionTimes(executionTimes[4], SharedMemory2DAndTiling_32_32, device_M1, device_M2, device_M3, M1Rows, M1Cols, M2Cols, gridDim_32, blockDim_32);
 
 	// Copy the result matrix from device to host
 	cudaMemcpy(M3.data, device_M3, M3Rows * M3Cols * sizeof(float), cudaMemcpyDeviceToHost);
-
-	// Open a new file to write the result into
-	char fileName[100];																					  // Max length filename (Just needs to be long enough)
-	sprintf(fileName, "Test/Multiplication_Execution_Times_Matrix_Size_%dx%d.csv", M3Rows, M3Cols); // Customize filename to reflect size of result matrix
-	FILE *outputFile = fopen(fileName, "w");
-	if (outputFile == NULL)
-	{
-		perror("Unable to create the output file");
-		return 1;
-	}
-
-	// Write execution times to the output file in separate columns
-	fprintf(outputFile, "Parallel, SharedMemoryAndTilling, SharedMemoryAndTiling_32_32, SharedMemory2DAndTilling, SharedMemory2DAndTiling_32_32 \n");
-	for (int i = 0; i < 1; i++)
-	{
-		fprintf(outputFile, "%f \n", //,%f,%f,%f,%f
-				executionTimes[0][i]);
-				//executionTimes[0][i],
-				//executionTimes[1][i],
-				//executionTimes[2][i],
-				//executionTimes[3][i],
-				//executionTimes[4][i]);
-	}
-
-	// Close the output file
-	fclose(outputFile);
 
 	freeMemory(device_M1, device_M2, device_M3, M1, M2, M3);
 

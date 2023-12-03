@@ -155,3 +155,10 @@ void freeMemory(float *device_M1, float *device_M2, float *device_M3, Matrix &M1
     free(M2.data);
     free(M3.data);
 }
+
+void freeDeviceMemory(float *device_M1, float *device_M2, float *device_M3)
+{
+    cudaFree(device_M1);
+    cudaFree(device_M2);
+    cudaFree(device_M3);
+}
