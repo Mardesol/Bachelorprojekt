@@ -38,11 +38,14 @@ void measureKernelExecutionTimes(
 	float *executionTimes,
 	void (*kernel)(float *, int),
 	float * device_A, int ADim,
-	dim3 gridDim, dim3 blockDim)
+	dim3 gridDim, dim3 blockDim,
+	Matrix A, size_t memorySize)
 {
+
 	for (int i = 0; i < numTimesToRun; i++)
 	{
 		// Measure execution time for the kernel
+		cudaMemcpy(device_A, A.data, memorySize, cudaMemcpyHostToDevice);
 		float time = measureKernelExecutionTime(kernel, device_A, ADim, gridDim, blockDim);
 		executionTimes[i] = time;
 	}
@@ -51,11 +54,14 @@ void measureKernelExecutionTimes(
 void measureFunctionExecutionTimes(
 	float* executionTimes,
 	int* (*function)(float*, int, dim3),
-	float* device_A, int ADim, dim3 blockDim)
+	float* device_A, int ADim, dim3 blockDim,
+	Matrix A, size_t memorySize)
 {
+
 	for (int i = 0; i < numTimesToRun; i++)
 	{
-		// Measure execution time for the kernel
+		// Measure execution time for the function
+		cudaMemcpy(device_A, A.data, memorySize, cudaMemcpyHostToDevice);
 		float time = measureFunctionExecutionTime(function, device_A, ADim, blockDim);
 		executionTimes[i] = time;
 	}
@@ -78,7 +84,6 @@ int main(int argc, char* argv[])
     populateWithRandomFloats(A);
 
     cudaMalloc((void **)&device_A, memorySize);
-    cudaMemcpy(device_A, A.data, memorySize, cudaMemcpyHostToDevice);
     endTimer(timer, "initialize matrices on CPU and GPU", printDebugMessages);
 
 	// Define block and grid dimensions for CUDA kernel
@@ -95,13 +100,10 @@ int main(int argc, char* argv[])
 	float executionTimes[3][numTimesToRun]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	//measureKernelExecutionTimes		(executionTimes[0], Sequential, 			    device_A, ADim, 1, 1);
-	measureKernelExecutionTimes		(executionTimes[0], New_Sequential_With_Partial_Pivoting,	device_A, ADim, 1, 1);
-	measureFunctionExecutionTimes	(executionTimes[1], Parallel_Pivoted,						device_A, ADim, blockDim);
-	measureFunctionExecutionTimes	(executionTimes[2], SharedMemory_Pivoted,					device_A, ADim, blockDim);
-
-	// Copy the result matrix from device to host
-	cudaMemcpy(A.data, device_A, ADim * ADim * sizeof(float), cudaMemcpyDeviceToHost);
+	
+	measureKernelExecutionTimes		(executionTimes[0], Sequential_With_Partial_Pivoting,		device_A, ADim, 1, 1, A, memorySize);
+	measureFunctionExecutionTimes	(executionTimes[1], Parallel_Pivoted,						device_A, ADim, blockDim, A, memorySize);
+	measureFunctionExecutionTimes	(executionTimes[2], SharedMemory_Pivoted,					device_A, ADim, blockDim, A, memorySize);
 
 	// Open a new file to write the result into
 	char fileName[100];																					  // Max length filename (Just needs to be long enough)
