@@ -21,72 +21,31 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* 
     switch (KernelNumToPerform)
     {
     case 1:
-        kernelName = "Sequential LUD (GPU)";
-        LUD_Sequential(A_CPU_Data, ADim);
-        beginTimer(timer);
-        Sequential<<<gridDim, blockDim>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "Sequential LUD (GPU)", printDebugMessages);
-        break;
-    case 2:
-        kernelName = "Sequential LUD with pivoting (GPU)";
-        LUD_Sequential_Partial_Pivoting(A_CPU_Data, ADim);
-        beginTimer(timer);
-        Sequential_Partial_Pivoting<<<1, 1>>>(device_A, ADim);
-        cudaDeviceSynchronize();
-        endTimer(timer, "Sequential LUD with pivoting (GPU)", printDebugMessages);
-        break;
-    case 3:
         kernelName = "New_Sequential";
         LUD_Sequential(A_CPU_Data, ADim);
         beginTimer(timer);
         New_Sequential << <1, 1>> > (device_A, ADim);
         endTimer(timer, "New_Sequential", printDebugMessages);
         break;
-    case 4:
+    case 2:
         kernelName = "New_Sequential_With_Partial_Pivoting";
         LUD_Sequential_Partial_Pivoting(A_CPU_Data, ADim);
         beginTimer(timer);
         New_Sequential_With_Partial_Pivoting << <1, 1 >> > (device_A, ADim);
         endTimer(timer, "New_Sequential_With_Partial_Pivoting", printDebugMessages);
         break;
-    case 5:
-        kernelName = "Parallel";
-        LUD_Sequential(A_CPU_Data, ADim);
-        beginTimer(timer);
-        Parallel(device_A, ADim, blockDim);
-        endTimer(timer, "Parallel", printDebugMessages);
-        break;
-    case 6:
-        kernelName = "Parallel_Pivoted";
-        pivotMatrix(A_CPU_Data, ADim);
-        //Copy the pivoted Matrix into device memory
-        cudaMemcpy(device_A, A_CPU_Data, (ADim * ADim * sizeof(float)), cudaMemcpyHostToDevice);
-        LUD_Sequential(A_CPU_Data, ADim);
-        beginTimer(timer);
-        Parallel(device_A, ADim, blockDim);
-        endTimer(timer, "Parallel_Pivoted", printDebugMessages);
-        break;
-    //case 7:
-    //    kernelName = "SharedMemory";
-    //    LUD_Sequential(A_CPU_Data, ADim);
-    //    beginTimer(timer);
-    //    SharedMemory(device_A, ADim, blockDim);
-    //    endTimer(timer, "SharedMemory", printDebugMessages);
-    //    break;
-    case 8:
-        kernelName = "SharedMemory_Pivoted";
-        beginTimer(timer);
-        hostPivotIndices = SharedMemory_Pivoted(device_A, ADim, blockDim);
-        endTimer(timer, "SharedMemory_Pivoted", printDebugMessages);
-        break;
-    case 9:
+    case 3:
         kernelName = "Parallel_Partial_Pivot";
         beginTimer(timer);
         hostPivotIndices = Parallel_Pivoted(device_A, ADim, blockDim);
         endTimer(timer, "Parallel_Pivoted", printDebugMessages);
         break;
-    
+    case 4:
+        kernelName = "SharedMemory_Pivoted";
+        beginTimer(timer);
+        hostPivotIndices = SharedMemory_Pivoted(device_A, ADim, blockDim);
+        endTimer(timer, "SharedMemory_Pivoted", printDebugMessages);
+        break; 
     default:
         kernelName = "Unknown";
         break;
