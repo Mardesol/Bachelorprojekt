@@ -21,18 +21,18 @@ const char *executeChosenKernel(int KernelNumToPerform, float *device_A, float* 
     switch (KernelNumToPerform)
     {
     case 1:
-        kernelName = "New_Sequential";
+        kernelName = "Sequential";
         LUD_Sequential(A_CPU_Data, ADim);
         beginTimer(timer);
-        New_Sequential << <1, 1>> > (device_A, ADim);
-        endTimer(timer, "New_Sequential", printDebugMessages);
+        Sequential << <1, 1>> > (device_A, ADim);
+        endTimer(timer, "Sequential", printDebugMessages);
         break;
     case 2:
-        kernelName = "New_Sequential_With_Partial_Pivoting";
+        kernelName = "Sequential_With_Partial_Pivoting";
         LUD_Sequential_Partial_Pivoting(A_CPU_Data, ADim);
         beginTimer(timer);
-        New_Sequential_With_Partial_Pivoting << <1, 1 >> > (device_A, ADim);
-        endTimer(timer, "New_Sequential_With_Partial_Pivoting", printDebugMessages);
+        Sequential_With_Partial_Pivoting << <1, 1 >> > (device_A, ADim);
+        endTimer(timer, "Sequential_With_Partial_Pivoting", printDebugMessages);
         break;
     case 3:
         kernelName = "Parallel_Partial_Pivot";
