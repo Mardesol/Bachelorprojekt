@@ -2,17 +2,17 @@
 
 
 void LUD_Sequential(float **A, int n) {
-    for (int i = 0; i < n; i++) {
+    for (int i = 1; i < n; i++) {
         for (int j = i; j < n; j++) {
             float sum = A[i][j];
-            for (int k = 0; k < i; k++) {
+            for (int k = 1; k < i; k++) {
                 sum -= A[i][k] * A[k][j];
             }
             A[i][j] = sum;
         }
         for (int j = i + 1; j < n; j++) {
             float sum = A[j][i];
-            for (int k = 0; k < i; k++) {
+            for (int k = 1; k < i; k++) {
                 sum -= A[j][k] * A[k][i];
             }
             A[j][i] = sum / A[i][i];
@@ -21,7 +21,7 @@ void LUD_Sequential(float **A, int n) {
 }
 
 void LUD_Sequential_Partial_Pivoting(float** A, int n) {
-    for (int i = 0; i < n; i++) {
+    for (int i = 1; i < n; i++) {
         int pivotRow = i;
         float maxVal = fabs(A[i][i]);
         for (int p = i + 1; p < n; p++) {
@@ -31,7 +31,7 @@ void LUD_Sequential_Partial_Pivoting(float** A, int n) {
             }
         }
         if (pivotRow != i) {
-            for (int j = 0; j < n; j++) {
+            for (int j = 1; j < n; j++) {
                 float temp = A[i][j];
                 A[i][j] = A[pivotRow][j];
                 A[pivotRow][j] = temp;
@@ -39,14 +39,14 @@ void LUD_Sequential_Partial_Pivoting(float** A, int n) {
         }
         for (int j = i; j < n; j++) {
             float sum = A[i][j];
-            for (int k = 0; k < i; k++) {
+            for (int k = 1; k < i; k++) {
                 sum -= A[i][k] * A[k][j];
             }
             A[i][j] = sum;
         }
         for (int j = i + 1; j < n; j++) {
             float sum = A[j][i];
-            for (int k = 0; k < i; k++) {
+            for (int k = 1; k < i; k++) {
                 sum -= A[j][k] * A[k][i];
             }
             A[j][i] = sum / A[i][i];
