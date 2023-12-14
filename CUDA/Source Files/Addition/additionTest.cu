@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
     cudaMemcpy(M3.data, device_M3, memorySize, cudaMemcpyDeviceToHost);
 
     // Open a new file to write the result into
-    char fileName[100];                                                                     // Max length filename (Just needs to be long enough)
+    char fileName[100];                                                                     // Max length of filename
     sprintf(fileName, "Test/Floats_Execution_Times_Matrix_Size_%dx%d.csv", MRows, MCols);   // Customize filename to reflect size of result matrix
     FILE *outputFile = fopen(fileName, "w");
     if (outputFile == NULL)

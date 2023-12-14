@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     {
         beginTimer(&timer);                   // Start measuring time for this iteration
         additionSequential(M1, M2, M3);       // Perform addition
-        executionTimes[i] = endTimer(&timer); // End measuring time for this iteration
+        executionTimes[i] = endTimer(&timer); // Add measured time for this iteration
     }
 
     // Open a new file to write result into
