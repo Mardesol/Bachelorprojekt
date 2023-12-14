@@ -2,7 +2,6 @@
 #include "cuda_runtime_api.h"
 #include "device_launch_parameters.h"
 #include <math.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,13 +11,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
-
 #include <cusolverDn.h>
 #include <cuda_runtime_api.h>
-
 
 __global__ void Sequential(float* A, int n) {
     // Loop over each row - Must be done 1 at the time
@@ -76,10 +72,8 @@ __global__ void Sequential_With_Partial_Pivoting(float* A, int n) {
     }
 }
 
-
-
-//Pivoting kernels
-//Combined kernel for finding pivot and swapping
+// Pivoting kernels
+// Combined kernel for finding pivot and swapping
 __global__ void PivotAndSwap(float* A, int* pivotIndices, int n, int i) {
     // Find the pivot: maximum element in the current column
     int maxIndex = i;
@@ -105,7 +99,7 @@ __global__ void PivotAndSwap(float* A, int* pivotIndices, int n, int i) {
     }
 }
 
-//Seperate kernels for finding pivot and swapping
+// Seperate kernels for finding pivot and swapping
 __global__ void FindPivot(float* A, int* pivotIndices, int n, int i) {
     int maxIndex = i;
     float maxValue = abs(A[i * n + i]);
@@ -131,7 +125,7 @@ __global__ void SwapRows(float* A, int* pivotIndices, int n, int i) {
 }
 
 
-//Parallel kernels and main function
+// Parallel kernels and main function
 __global__ void ComputeLowerColumn(float* A, int n, int i) {
     int row = blockIdx.y * blockDim.y + threadIdx.y + i + 1;
 
@@ -156,15 +150,13 @@ int* Parallel_Pivoted(float* A, int n, dim3 blockDim) {
 
     // Loop over each row - Must be done 1 at the time
     for (int i = 0; i < n; i++) {
-
         // Find pivot and swap
-        
         dim3 blockDimRow(blockDim.x, 1);
         dim3 gridDimRow((n + blockDim.x - 1) / blockDim.x, 1);
         //PivotAndSwap << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
         //PivotAndSwap << <1, 1>> > (A, pivotIndices, n, i);
-        FindPivot << <1,1>> > (A, pivotIndices, n, i);
-        SwapRows << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
+        FindPivot <<<1,1>>> (A, pivotIndices, n, i);
+        SwapRows <<<gridDimRow, blockDimRow >>> (A, pivotIndices, n, i);
         cudaDeviceSynchronize();
 
         //Dimensions of the submatrix below/to the right of element (i,i)
@@ -187,10 +179,7 @@ int* Parallel_Pivoted(float* A, int n, dim3 blockDim) {
     return hostPivotIndices;
 }
 
-
-
-
-//Shared Memory kernels and main function
+// Shared Memory kernels and main function
 __global__ void ComputeLowerColumnShared(float* A, int n, int i) {
     __shared__ float pivotElement;
     pivotElement = A[i * n + i];
@@ -235,8 +224,8 @@ int* SharedMemory_Pivoted(float* A, int n, dim3 blockDim) {
         dim3 gridDimRow((n + blockDim.x - 1) / blockDim.x, 1);
         //PivotAndSwap << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
         //PivotAndSwap << <1, 1 >> > (A, pivotIndices, n, i);
-        FindPivot << <1, 1 >> > (A, pivotIndices, n, i);
-        SwapRows << <gridDimRow, blockDimRow >> > (A, pivotIndices, n, i);
+        FindPivot <<<1, 1>>> (A, pivotIndices, n, i);
+        SwapRows <<<gridDimRow, blockDimRow>>> (A, pivotIndices, n, i);
         cudaDeviceSynchronize();
 
         //Dimensions of the submatrix below/to the right of element (i,i)
@@ -244,10 +233,10 @@ int* SharedMemory_Pivoted(float* A, int n, dim3 blockDim) {
 
         dim3 blockDimColumn(1, blockDim.y);
         dim3 gridDimColumn(1, (subMatrixDim + blockDim.x - 1) / blockDim.x);
-        ComputeLowerColumnShared << <gridDimColumn, blockDimColumn >> > (A, n, i);
+        ComputeLowerColumnShared <<<gridDimColumn, blockDimColumn >>> (A, n, i);
 
         dim3 gridDimSubmatrix((subMatrixDim + blockDim.x - 1) / blockDim.x, (subMatrixDim + blockDim.y - 1) / blockDim.y);
-        UpdateSubmatrixShared << <gridDimSubmatrix, blockDim >> > (A, n, i);
+        UpdateSubmatrixShared <<<gridDimSubmatrix, blockDim >>> (A, n, i);
 
     }
 

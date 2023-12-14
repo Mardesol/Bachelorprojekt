@@ -1,7 +1,6 @@
 #ifndef MATRIX2D_H
 #define MATRIX2D_H
 
-// Define Matrix as a typedef of struct Matrix
 typedef struct Matrix2D
 {
     int rows;
@@ -9,7 +8,6 @@ typedef struct Matrix2D
     float **data;
 } Matrix2D;
 
-// Declare function prototypes
 Matrix2D createMatrix2D(int rows, int cols);
 void populateWithOnes(Matrix2D matrix);
 void populateWithRandomFloats(Matrix2D matrix);

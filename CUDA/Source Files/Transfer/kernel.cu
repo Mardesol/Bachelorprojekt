@@ -1,7 +1,7 @@
 #include "..\Timer\timer.cu"
 #include "..\Matrix\matrix.cu"
 
-// CUDA kernel to add two matrices in parallel, utilizing both thread and block level parallelism
+// CUDA kernel to add two matrices in parallel
 __global__ void Parallel(float *M1, float *M2, float *M3, int rows, int cols)
 {
     int row = blockIdx.y * blockDim.y + threadIdx.y;

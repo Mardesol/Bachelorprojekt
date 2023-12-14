@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     initializeMatricesAndMemory(M1, M2, M3, MRows, MCols, MRows, MCols, MRows, MCols);
    
     // Create an array to store execution times for each kernel
-    float transferTimes[100]; // 3 kernels, 100 executions each
+    float transferTimes[100]; // 100 executions
 
     for (int i = 0; i < 100; i++) {
         // Measure (host -> device) transfer time including necesarry setup

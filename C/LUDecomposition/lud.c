@@ -1,5 +1,4 @@
 #include <math.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -68,7 +67,6 @@ int main()
 
     //LUD_Simple(matrix.data, MATRIX_SIZE);
     LUD_Sequential_Partial_Pivoting(matrix.data, MATRIX_SIZE);
-    //LUD_Pivoting_Crout(matrix.data, MATRIX_SIZE, indx, &d);
 
     // Write the resulting L and U into a file
     char filename[100];

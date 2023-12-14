@@ -70,10 +70,7 @@ void measureFunctionExecutionTimes(
 int main(int argc, char* argv[])
 {
 	int ADim = atoi(argv[1]); 
-
     size_t memorySize = ADim * ADim * sizeof(float);
-
-	// Timer measure time spent on a process
 	Timer timer = createTimer();
 
     beginTimer(timer);
@@ -100,13 +97,12 @@ int main(int argc, char* argv[])
 	float executionTimes[3][numTimesToRun]; // 3 kernels, 100 executions each
 
 	// Measure and record execution times
-	
 	measureKernelExecutionTimes		(executionTimes[0], Sequential_With_Partial_Pivoting,		device_A, ADim, 1, 1, A, memorySize);
 	measureFunctionExecutionTimes	(executionTimes[1], Parallel_Pivoted,						device_A, ADim, blockDim, A, memorySize);
 	measureFunctionExecutionTimes	(executionTimes[2], SharedMemory_Pivoted,					device_A, ADim, blockDim, A, memorySize);
 
 	// Open a new file to write the result into
-	char fileName[100];																					  // Max length filename (Just needs to be long enough)
+	char fileName[100];																 // Max length filename (Just needs to be long enough)
 	sprintf(fileName, "Test/LUD_Execution_Times_Matrix_Size_%dx%d.csv", ADim, ADim); // Customize filename to reflect size of result matrix
 	FILE *outputFile = fopen(fileName, "w");
 	if (outputFile == NULL)

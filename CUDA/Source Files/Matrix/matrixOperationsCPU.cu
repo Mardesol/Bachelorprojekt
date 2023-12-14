@@ -23,9 +23,6 @@ void multiplication(Matrix M1, Matrix M2, Matrix M3)
             for (int k = 0; k < M1.cols; k++)
             {
                 float sum = M1.data[i * M1.cols + k] * M2.data[k * M2.cols + j];
-                /*if (isnan(sum)) {
-                    printf("nan detected on index %d, %d, when calculating %f * %f, with indices %d and %d\n", i, j, M1.data[i * M1.cols + k], M2.data[k * M2.cols + j], i * M1.cols + k, k * M2.cols + j);
-                }*/
                 M3.data[i * M2.cols + j] += M1.data[i * M1.cols + k] * M2.data[k * M2.cols + j];
             }
         }
@@ -102,9 +99,7 @@ void applyPivoting(float* matrix, int* pivotIndices, int n) {
     float* tempRow = (float*)malloc(n * sizeof(float));
 
     for (int i = n - 1; i >= 0; --i) {
-        //printf("index %d is %d \n", i, pivotIndices[i]);
         if (pivotIndices[i] != i) {
-            //printf("Im swapping row %d with row %d \n", i, pivotIndices[i]);
             // Swap the entire current row with the pivot row
             for (int col = 0; col < n; ++col) {
                 tempRow[col] = matrix[i * n + col];
@@ -122,18 +117,17 @@ void separateLU(float* combinedLU, float* L, float* U, int n) {
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             if (i == j) {
-                U[i * n + j] = combinedLU[i * n + j]; // Diagonal element belongs to U
-                L[i * n + j] = 1.0f; // Initialize L's diagonal with 1's
+                U[i * n + j] = combinedLU[i * n + j];   // Diagonal element belongs to U
+                L[i * n + j] = 1.0f;                    // Initialize L's diagonal with 1's
             }
             else if (i > j) {
-                L[i * n + j] = combinedLU[i * n + j]; // Lower part of L
-                U[i * n + j] = 0.0f; // Initialize U with zeros in the lower part
+                L[i * n + j] = combinedLU[i * n + j];   // Lower part of L
+                U[i * n + j] = 0.0f;                    // Initialize U with zeros in the lower part
             }
             else {
-                L[i * n + j] = 0.0f; // Initialize L with zeros in the upper part
-                U[i * n + j] = combinedLU[i * n + j]; // Upper part of U
+                L[i * n + j] = 0.0f;                    // Initialize L with zeros in the upper part
+                U[i * n + j] = combinedLU[i * n + j];   // Upper part of U
             }
         }
     }
 }
-

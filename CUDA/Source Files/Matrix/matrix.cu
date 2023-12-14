@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <curand_kernel.h>
 
 // Create a matrix on the host
@@ -31,13 +30,13 @@ void populateWithOnes(Matrix matrix)
     {
         for (int j = 0; j < matrix.cols; j++)
         {
-            matrix.data[i * matrix.cols + j] = 1.0f; // Change to float
+            matrix.data[i * matrix.cols + j] = 1.0f;
         }
     }
 }
 
 // Generate random floats on the CPU using srand
-void populateWithRandomFloats1(Matrix matrix)
+void populateWithRandomFloats(Matrix matrix)
 {
     srand(42);
 
@@ -48,30 +47,7 @@ void populateWithRandomFloats1(Matrix matrix)
             float rand1 = rand();
             float rand2 = rand()+0.00001f;
             float f = (float)rand1 / rand2;
-            if (isnan(f)) {
-                printf("I have created a nan: %f when %f / %f\n", f, rand1, rand2);
-            }
-            else if (isinf(f)) {
-                printf("I have created a inf: %f when %f / %f\n", f, rand1, rand2);
-            }
-            //matrix.data[i * matrix.cols + j] = (float)rand() / RAND_MAX;
-            //matrix.data[i * matrix.cols + j] = (float)rand() / rand();
-            matrix.data[i * matrix.cols + j] = f;
-        }
-    }
-}
 
-void populateWithRandomFloats(Matrix matrix)
-{
-    srand(42);
-
-    for (int i = 0; i < matrix.rows; i++)
-    {
-        for (int j = 0; j < matrix.cols; j++)
-        {
-            //float rand1 = rand();
-            float rand2 = rand() + 0.00001f;
-            float f = rand2;
             matrix.data[i * matrix.cols + j] = f;
         }
     }

@@ -9,16 +9,16 @@ struct Matrix2D createMatrix2D(int rows, int cols)
     matrix.rows = rows;
     matrix.cols = cols;
 
-    matrix.data = (float **)malloc((rows + 1) * sizeof(float*));  // Adjusted here
+    matrix.data = (float **)malloc((rows + 1) * sizeof(float*));  
     if (matrix.data == NULL)
     {
         printf("Memory allocation failed.\n");
         exit(1);
     }
 
-    for (int i = 1; i <= rows; i++)  // Adjusted loop
+    for (int i = 1; i <= rows; i++) 
     {
-        matrix.data[i] = (float *)malloc((cols + 1) * sizeof(float));  // Adjusted here
+        matrix.data[i] = (float *)malloc((cols + 1) * sizeof(float));  
         if (matrix.data[i] == NULL)
         {
             printf("Memory allocation failed for row %d.\n", i);
@@ -63,9 +63,9 @@ void printMatrix2DToFile(char *fileName, Matrix2D matrix)
         return;
     }
 
-    for (int i = 1; i <= matrix.rows; i++)  // Adjusted loop
+    for (int i = 1; i <= matrix.rows; i++)
     {
-        for (int j = 1; j <= matrix.cols; j++)  // Adjusted loop
+        for (int j = 1; j <= matrix.cols; j++)
         {
             fprintf(outputFile, "%f ", matrix.data[i][j]);
         }

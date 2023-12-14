@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     Matrix M2 = create_C_Matrix(MRows, MCols);
     Matrix M3 = create_C_Matrix(MRows, MCols);
 
-    // Read data into M1 and M2
+    // Write data into M1 and M2
     populateWithRandomFloats(M1);
     populateWithRandomFloats(M2);
 

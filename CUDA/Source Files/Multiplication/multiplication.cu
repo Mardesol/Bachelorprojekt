@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     }
 
     // Open a new file to write the result into
-    char fileName[100];                                                                                           // Max length filename (Just needs to be long enough)
+    char fileName[100];                                                                                    // Max length filename (Just needs to be long enough)
     sprintf(fileName, "Test/Multiplication_%s_Runtime_Matrix_Size_%dx%d.csv", kernelName, M3Rows, M3Cols); // Customize filename to reflect size of result matrix
     printMatrixToFile(fileName, M3);
 

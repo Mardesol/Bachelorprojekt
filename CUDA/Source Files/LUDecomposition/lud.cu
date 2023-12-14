@@ -83,22 +83,17 @@ int main(int argc, char *argv[])
     const char *kernelName = executeChosenKernel(KernelNumToPerform, device_A, A_CPU.data, ADim, timer);
     cudaMemcpy(A.data, device_A, memorySize, cudaMemcpyDeviceToHost);
 
-    //Split the result into a L and U matrix
+    // Split the result into a L and U matrix
     Matrix L = createMatrix(ADim, ADim);
     Matrix U = createMatrix(ADim, ADim);
-    printMatrixToFile("Original.txt", A);
     separateLU(A.data, L.data, U.data, ADim);
-    printMatrixToFile("Lower.txt", L);
-    printMatrixToFile("Upper.txt", U);
 
-    //Multiply L and U for correctness check
+    // Multiply L and U for correctness check
     Matrix LUProduct = createMatrix(ADim, ADim);
     multiplication(L, U, LUProduct);
-    printMatrixToFile("Product.txt", LUProduct);
 
-    //Apply pivoting te the reconstructed matrix
+    // Apply pivoting te the reconstructed matrix
     applyPivoting(LUProduct.data, hostPivotIndices, ADim);
-
 
     // Validate result by comparing to the input matrix
     char fileNameDiff[100];
